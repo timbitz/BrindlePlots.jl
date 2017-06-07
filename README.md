@@ -1,2 +1,2 @@
-# Labrador.jl
+# WhippetPlots.jl 
 Visualization package for Whippet.jl
