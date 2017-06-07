@@ -5,7 +5,7 @@ os:
 julia:
   - 0.5
 install:
-  julia -e 'Pkg.add("Gadfly"); Pkg.clone("https://github.com/timbitz/BrindlePlots.jl.git")'
+  julia -e 'Pkg.clone("https://github.com/timbitz/BrindlePlots.jl.git")'
 notifications:
   email: false
 script:
