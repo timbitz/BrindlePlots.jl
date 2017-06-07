@@ -1,7 +1,0 @@
-
-module Labrador
-
-
-
-end
-
