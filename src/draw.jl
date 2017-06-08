@@ -21,64 +21,6 @@ make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::F
 make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin] 
 make_box( first::Int, last::Int, number::Int=1) = make_box( first, last, number + POLYWIDTH, number - POLYWIDTH )
 
-immutable BrindleRegion
-   chr::String
-   first::Int
-   last::Int
-   strand::Char
-end
-
-Base.convert(::Type{String}, br::BrindleRegion) = br.chr * ":" * string(br.first) * "-" * string(br.last) * ":" * string(br.strand)
-
-immutable BrindleNode
-   chr::String
-   first::Int
-   last::Int
-   psi::Float64
-end
-
-immutable BrindleEdge
-   first::Int
-   last::Int
-   value::Float64
-end
-
-type BrindleEdgeSet
-   edges::Vector{BrindleEdge}
-   nodes::IntSet
-   maxvalue::Float64
-end
-
-function Base.parse(::Type{BrindleNode}, str::String, psi::Float64)
-   colon  = split( str, ':' )
-   ints   = split( string(colon[2]), '-' )
-   BrindleNode( string(colon[1]), parse(Int, string(ints[1])), parse(Int, string(ints[2])), psi )
-end
-
-function Base.parse{S <: AbstractString}(::Type{BrindleEdge}, str::S )
-   colon = split( string(str), ':' )
-   ints  = split( string(colon[1]), '-' )
-   first = parse(Int, string(ints[1]))
-   last  = parse(Int, string(ints[2]))
-   value = parse(Float64, string(colon[2]))
-   BrindleEdge(first, last, value)
-end
-
-function Base.parse(::Type{BrindleEdgeSet}, str::String )
-   edgestr = split( str, ',' )
-   edges = Vector{BrindleEdge}()
-   nodes = IntSet()
-   maxval = 0.0
-   for s in edgestr
-      be = parse(BrindleEdge, s)
-      push!( edges, be )
-      push!( nodes, be.first )
-      push!( nodes, be.last  )
-      maxval = be.value > maxval ? be.value : maxval
-   end
-   BrindleEdgeSet( edges, nodes, maxval )
-end
-
 function draw_event( df::DataFrame, node::Int, sample::String, curi=0, colornum=2 )
    layers = Vector{Gadfly.Layer}()
    draw_event!( layers, df, node, sample, curi, colornum )
@@ -92,6 +34,7 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    nodes = Dict{Int,BrindleNode}()
    lower,upper = Inf,-Inf
    chr,strand  = "",true
+
    # draw exons
    for n in edgeset.nodes
       (length(df[(df[:,:Node] .== n),:Coord]) == 0) && continue
@@ -104,11 +47,13 @@ function draw_event!( layers::Vector{Gadfly.Layer},
       upper = upper < cnode.last  ? cnode.last  : upper
       xset,yset = make_box( cnode.first, cnode.last, curi )
       alphacols  = default_colors( colornum, cnode.psi )
+
       push!( layers, layer(x=xset, y=yset, Geom.polygon(fill=true), polygon_theme(alphacols[curi]))[1] )
       if cnode.psi < 1.0
          push!( layers, layer(x=[median(cnode.first:cnode.last)], y=[curi], label=[string(cnode.psi)], Geom.label(position=:centered))[1] )
       end
    end
+
    # draw junctions
    range = upper - lower
    for edge in edgeset.edges
@@ -117,10 +62,12 @@ function draw_event!( layers::Vector{Gadfly.Layer},
       last  = strand ? nodes[edge.last].first : nodes[edge.first].first
       height = (last - first) / range
       upright = (edge.first + 1 == edge.last)
+
       xarc,yarc = make_arc( first, last, curi, upright, height * ARCHEIGHT )
       push!( layers, layer(x=xarc, y=yarc, Geom.path, arc_theme(edge.value / edgeset.maxvalue, cols[curi]))[1] )
       push!( layers, layer(x=[median(xarc)], y=[(upright ? maximum(yarc)-0.1 : minimum(yarc)+0.115)],
                            label=[string(edge.value)], Geom.label(position=:centered))[1] )
+
    end
    labelpos = upper + range*0.025
    lonode,hinode = first(edgeset.nodes),last(edgeset.nodes)
@@ -128,8 +75,10 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    entr = df[(df[:,:Node] .== node),:Entropy][1]
    strand = df[(df[:,:Node] .== node),:Strand][1]
    metalab = "Nodes: $lonode-$hinode, $comp, $(string(entr))"
+
    push!( layers, layer(x=[labelpos], y=[curi+0.1], label=[sample], Geom.label(position=:right), default_theme())[1] )
    push!( layers, layer(x=[labelpos], y=[curi-0.05], label=[metalab], Geom.label(position=:right), default_theme())[1] ) 
+
    BrindleRegion(chr, lower, upper, strand[1])
 end
 

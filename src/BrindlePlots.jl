@@ -13,6 +13,7 @@ using DataFrames
 importall Measures
 importall Gadfly
 
+include("types.jl")
 include("input.jl")
 include("themes.jl")
 include("draw.jl")
