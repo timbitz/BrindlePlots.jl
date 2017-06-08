@@ -1,4 +1,5 @@
 
+# Code in this file should format multiple plots into a single output format type. 
 
 plot(layer(x=xtop, y=ytop, Geom.path, arc_theme(0.66)),
      layer(x=xleft, y=yleft, Geom.path, arc_theme(0.125),

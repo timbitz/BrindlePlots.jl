@@ -20,4 +20,6 @@ make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true ) = upright ?
 make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin] 
 make_box( first::Int, last::Int; number::Int=1) = make_box( first, last, number + POLYWIDTH, number - POLYWIDTH )
 
+function make_event_plot( event::WhippetEvent )
 
+end
