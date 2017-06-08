@@ -50,8 +50,8 @@ type BrindleEdgeSet
 end
 
 function Base.parse(::Type{BrindleNode}, str::String, psi::Float64)
-   colon = split( str, ':' )
-   ints  = split( string(colon[2]), '-' )
+   colon  = split( str, ':' )
+   ints   = split( string(colon[2]), '-' )
    BrindleNode( string(colon[1]), parse(Int, string(ints[1])), parse(Int, string(ints[2])), psi )
 end
 
@@ -91,11 +91,11 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    edgeset = parse(BrindleEdgeSet, df[(df[:,:Node] .== node),:Edges][1])
    nodes = Dict{Int,BrindleNode}()
    lower,upper = Inf,-Inf
-   chr = ""
+   chr,strand  = "",true
    # draw exons
    for n in edgeset.nodes
-      println(df[(df[:,:Node] .== n),:])
       psi = df[(df[:,:Node] .== n),:Psi][1]
+      strand = df[(df[:,:Node] .== n),:Strand][1] == "+" ? true : false
       cnode = parse(BrindleNode, df[(df[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi)
       chr = cnode.chr
       nodes[n] = cnode
@@ -111,8 +111,8 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    # draw junctions
    range = upper - lower
    for edge in edgeset.edges
-      first = nodes[edge.first].last
-      last  = nodes[edge.last].first
+      first = strand ? nodes[edge.first].last : nodes[edge.last].last
+      last  = strand ? nodes[edge.last].first : nodes[edge.first].first
       height = (last - first) / range
       upright = (edge.first + 1 == edge.last)
       xarc,yarc = make_arc( first, last, curi, upright, height * ARCHEIGHT )
