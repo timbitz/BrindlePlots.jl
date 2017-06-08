@@ -8,7 +8,7 @@ using Libz
 using DataFrames
 
 include("themes.jl")
-include("elements.jl")
+include("draw.jl")
 include("input.jl")
 
 export BrindlePlot
