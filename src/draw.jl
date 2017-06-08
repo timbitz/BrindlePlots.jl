@@ -112,6 +112,7 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    # draw junctions
    range = upper - lower
    for edge in edgeset.edges
+      (haskey(nodes, edge.first) && haskey(nodes, edge.last)) || continue
       first = strand ? nodes[edge.first].last : nodes[edge.last].last
       last  = strand ? nodes[edge.last].first : nodes[edge.first].first
       height = (last - first) / range
