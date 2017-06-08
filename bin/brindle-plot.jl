@@ -69,7 +69,10 @@ function main()
    end
    tables = load_tables( full )
    delta  = open_stream( args["delta"] )
-   make_plots( tables, delta )
+   make_plots( delta, tables, full, fixpath(args["out"]) )
+   close(delta)
 
    println(STDERR, "BrindlePlots $ver done." )
 end
+
+main()

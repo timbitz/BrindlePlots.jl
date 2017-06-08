@@ -94,6 +94,7 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    chr = ""
    # draw exons
    for n in edgeset.nodes
+      println(df[(df[:,:Node] .== n),:])
       psi = df[(df[:,:Node] .== n),:Psi][1]
       cnode = parse(BrindleNode, df[(df[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi)
       chr = cnode.chr

@@ -1,10 +1,15 @@
 
 # Code in this file should format multiple plots into a single output format type. 
 
-plot(layer(x=xtop, y=ytop, Geom.path, arc_theme(0.66)),
-     layer(x=xleft, y=yleft, Geom.path, arc_theme(0.125),
-    layer(x=xright, y=yright, Geom.path, arc_theme(0.125),
-                   layer(x=xex1, y=yex1, Geom.polygon(fill=true), polygon_theme),
-                   layer(x=xex2, y=yex2, Geom.polygon(fill=true), polygon_theme),
-                   layer(x=xex3, y=yex3, Geom.polygon(fill=true), polygon_theme),
-                   Coord.cartesian( ymin=0.0, ymax=4.0, xmin=0.0, xmax=5.0), default_theme)
+function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{String}, filename::String )
+   header = readline( delta )
+   for l in eachline( delta )
+      spl = split( l, '\t' )
+      geneid  = String(spl[1])
+      nodestr = String(spl[2])
+      xlab, layers = draw_events( tables, samples, geneid, parse(Int, nodestr) )
+      set_plot_size(length(tables))
+      toplot = plot(layers, xlab, Guide.ylabel(""), Guide.yticks(label=false), default_theme())
+      draw(PDF("$geneid\_$nodestr\_$filename.pdf", plot_dimensions( length(tables) )...), toplot)
+   end
+end

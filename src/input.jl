@@ -5,8 +5,13 @@
 
 const BufIn = BufferedStreams.BufferedInputStream
 
-parse_complexity{S <: AbstractString}( c::S ) = split( c, COMPLEX_CHAR, keep=false )[1] |> x->parse(Int,x)
-parse_float_omit_text{S <: AbstractString}( str::S, header::String ) = str != "NA" && str != header ? parse(Float64, str) : 0.0
+fixpath( str::String ) = abspath( expanduser( str ) )
+
+function isgzipped( filename::String )
+   restr = "\.gz\$"
+   re = Base.match(Regex(restr), filename)
+   return re == nothing ? false : true
+end
 
 function open_stream( filename )
    fopen = open( filename, "r" )
