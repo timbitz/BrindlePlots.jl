@@ -14,6 +14,6 @@ end
 
 samples = ["test.psi.gz", "test2.psi.gz"]
 tabs = load_tables( samples )
-layers = draw_events( tabs, samples, "ENSG00000117448.13_2", 10 )
+xlab, layers = draw_events( tabs, samples, "ENSG00000117448.13_2", 10 )
 plot_size(2)
-plot(layers, Guide.xlabel("chr1"), Guide.ylabel(""), default_theme())
+plot(layers, xlab, Guide.ylabel(""), Guide.yticks(label=false), default_theme())

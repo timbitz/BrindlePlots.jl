@@ -21,6 +21,15 @@ make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::F
 make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin] 
 make_box( first::Int, last::Int, number::Int=1) = make_box( first, last, number + POLYWIDTH, number - POLYWIDTH )
 
+immutable BrindleRegion
+   chr::String
+   first::Int
+   last::Int
+   strand::Char
+end
+
+Base.convert(::Type{String}, br::BrindleRegion) = br.chr * ":" * string(br.first) * "-" * string(br.last) * ":" * string(br.strand)
+
 immutable BrindleNode
    chr::String
    first::Int
@@ -86,16 +95,16 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    # draw exons
    for n in edgeset.nodes
       psi = df[(df[:,:Node] .== n),:Psi][1]
-      node = parse(BrindleNode, df[(df[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi)
-      chr = node.chr
-      nodes[n] = node
-      lower = lower > node.first ? node.first : lower
-      upper = upper < node.last  ? node.last  : upper
-      xset,yset = make_box( node.first, node.last, curi )
-      alphacols  = default_colors( colornum, node.psi )
+      cnode = parse(BrindleNode, df[(df[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi)
+      chr = cnode.chr
+      nodes[n] = cnode
+      lower = lower > cnode.first ? cnode.first : lower
+      upper = upper < cnode.last  ? cnode.last  : upper
+      xset,yset = make_box( cnode.first, cnode.last, curi )
+      alphacols  = default_colors( colornum, cnode.psi )
       push!( layers, layer(x=xset, y=yset, Geom.polygon(fill=true), polygon_theme(alphacols[curi]))[1] )
-      if node.psi < 1.0
-         push!( layers, layer(x=[median(node.first:node.last)], y=[curi], label=[string(node.psi)], Geom.label(position=:centered))[1] )
+      if cnode.psi < 1.0
+         push!( layers, layer(x=[median(cnode.first:cnode.last)], y=[curi], label=[string(cnode.psi)], Geom.label(position=:centered))[1] )
       end
    end
    # draw junctions
@@ -110,18 +119,35 @@ function draw_event!( layers::Vector{Gadfly.Layer},
       push!( layers, layer(x=[median(xarc)], y=[(upright ? maximum(yarc)-0.1 : minimum(yarc)+0.115)],
                            label=[string(edge.value)], Geom.label(position=:centered))[1] )
    end
-   labelpos = upper + range*0.05
+   labelpos = upper + range*0.025
    lonode,hinode = first(edgeset.nodes),last(edgeset.nodes)
-   kval = string(df[(df[:,:Node] .== node),:Complexity])
-   push!( layers, layer(x=[labelpos], y=[curi], label=[sample], Geom.label(position=:right), default_theme())[1] )
-   Guide.xlabel("$chr:$lower-$upper")
+   comp = df[(df[:,:Node] .== node),:Complexity][1]
+   entr = df[(df[:,:Node] .== node),:Entropy][1]
+   strand = df[(df[:,:Node] .== node),:Strand][1]
+   metalab = "Nodes: $lonode-$hinode, $comp, $(string(entr))"
+   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=[sample], Geom.label(position=:right), default_theme())[1] )
+   push!( layers, layer(x=[labelpos], y=[curi-0.05], label=[metalab], Geom.label(position=:right), default_theme())[1] ) 
+   BrindleRegion(chr, lower, upper, strand[1])
+end
+
+function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, node::Int, xpos, ypos::Float64 )
+   meta = "Gene: $geneid\tNode: $node"
+   push!( layers, layer(x=[xpos], y=[ypos], label=[meta], Geom.label(position=:right), default_theme())[1] )
 end
 
 function draw_events( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::String, node::Int )
+   reverse!(tabs)
+   reverse!(samples)
    colnum = 2 > length(tabs) ? 2 : length(tabs)
    layers = Vector{Gadfly.Layer}()
+   xmin,xmax = Inf,-Inf
+   chr,strand = "",' '
    for i in 1:length(tabs)
-      draw_event!( layers, tabs[i][tabs[i][:,:Gene] .== geneid,:], node, samples[i], i, colnum )
+      xregion = draw_event!( layers, tabs[i][tabs[i][:,:Gene] .== geneid,:], node, samples[i], i, colnum )
+      xmin = xregion.first < xmin ? xregion.first : xmin
+      xmax = xregion.last  > xmax ? xregion.last  : xmax
+      chr,strand = xregion.chr,xregion.strand
    end
-   layers
+   draw_metadata!( layers, geneid, node, xmin, length(tabs) + 0.6 )
+   Guide.xlabel(convert(String, BrindleRegion(chr,xmin,xmax,strand))), layers
 end
