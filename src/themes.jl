@@ -1,5 +1,9 @@
 
 default_colors( n::Int ) = [Scale.color_continuous().f(p) for p in linspace(0, 1, n)]
+default_colors( n::Int, opacity::Float64 ) = [(t = convert(Gadfly.RGBA, c); 
+                                              return Gadfly.RGBA(t.r, t.g, t.b, opacity)) 
+                                              for c in default_colors(n)]
+
 
 const DEFAULT_COLOR = default_colors(6)[1]
 

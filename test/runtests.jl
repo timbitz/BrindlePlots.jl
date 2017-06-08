@@ -12,7 +12,8 @@ include("../src/draw.jl")
 @testset "Basic Single Plot" begin
 end
 
-tabs = load_tables( ["test.psi.gz", "test2.psi.gz"] )
-layers = draw_events( tabs, "ENSG00000117448.13_2", 10 )
+samples = ["test.psi.gz", "test2.psi.gz"]
+tabs = load_tables( samples )
+layers = draw_events( tabs, samples, "ENSG00000117448.13_2", 10 )
 plot_size(2)
 plot(layers, Guide.xlabel("chr1"), Guide.ylabel(""), default_theme())
