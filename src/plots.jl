@@ -10,6 +10,6 @@ function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{St
       xlab, layers = draw_events( tables, samples, geneid, parse(Int, nodestr) )
       set_plot_size(length(tables))
       toplot = plot(layers, xlab, Guide.ylabel(""), Guide.yticks(label=false), default_theme())
-      draw(PDF("$geneid\_$nodestr\_$filename.pdf", plot_dimensions( length(tables) )...), toplot)
+      draw(PDF("$geneid\_$nodestr\_$(basename(filename)).pdf", plot_dimensions( length(tables) )...), toplot)
    end
 end
