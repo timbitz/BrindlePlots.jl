@@ -94,6 +94,7 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    chr,strand  = "",true
    # draw exons
    for n in edgeset.nodes
+      (length(df[(df[:,:Node] .== n),:Coord]) == 0) && continue
       psi = df[(df[:,:Node] .== n),:Psi][1]
       strand = df[(df[:,:Node] .== n),:Strand][1] == "+" ? true : false
       cnode = parse(BrindleNode, df[(df[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi)
