@@ -89,8 +89,11 @@ function draw_event!( layers::Vector{Gadfly.Layer},
       first = nodes[edge.first].last
       last  = nodes[edge.last].first
       height = (last - first) / range
-      xarc,yarc = make_arc( first, last, midline, edge.first + 1 == edge.last, height * ARCHEIGHT )
+      upright = (edge.first + 1 == edge.last)
+      xarc,yarc = make_arc( first, last, midline, upright, height * ARCHEIGHT )
       push!( layers, layer(x=xarc, y=yarc, Geom.path, arc_theme(edge.value / edgeset.maxvalue, color))[1] )
+      push!( layers, layer(x=[median(xarc)], y=[(upright ? maximum(yarc)-0.1 : minimum(yarc)+0.115)], 
+                           label=[string(edge.value)], Geom.label(position=:centered))[1] )
    end
    for node in values(nodes)
       xset,yset = make_box( node.first, node.last, midline )

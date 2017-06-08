@@ -14,4 +14,5 @@ end
 
 tabs = load_tables( ["test.psi.gz", "test2.psi.gz"] )
 layers = draw_events( tabs, "ENSG00000117448.13_2", 10 )
-plot(layers)
+plot_size(2)
+plot(layers, Guide.xlabel("chr1"), Guide.ylabel(""), default_theme())
