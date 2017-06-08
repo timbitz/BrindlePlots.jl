@@ -7,9 +7,9 @@ using BufferedStreams
 using Libz
 using DataFrames
 
+include("input.jl")
 include("themes.jl")
 include("draw.jl")
-include("input.jl")
 
 export BrindlePlot
 
