@@ -103,3 +103,8 @@ function draw_events( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::
    draw_metadata!( layers, geneid, node, xmin, length(tabs) + 0.6 )
    Guide.xlabel(convert(String, BrindleRegion(chr,xmin,xmax,strand))), layers
 end
+
+
+
+function draw_synthetic_lane( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}
+

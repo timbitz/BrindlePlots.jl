@@ -26,6 +26,12 @@ type BrindleEdgeSet
    maxvalue::Float64
 end
 
+type BrindlePath
+   path::IntSet
+   length::Int
+   psi::Float64
+end
+
 function Base.parse(::Type{BrindleNode}, str::String, psi::Float64)
    colon  = split( str, ':' )
    ints   = split( string(colon[2]), '-' )
