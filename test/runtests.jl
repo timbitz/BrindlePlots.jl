@@ -3,7 +3,6 @@ using Base.Test
 using BufferedStreams
 using Libz
 using DataFrames
-using Measures
 using Cairo
 using Compose
 using Gadfly
