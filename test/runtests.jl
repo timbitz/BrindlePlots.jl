@@ -1,19 +1,10 @@
 
+const dir = abspath( splitdir(@__FILE__)[1] )
+unshift!( LOAD_PATH, dir * "/../src" )
+
 using Base.Test
+using BrindlePlots
 using BufferedStreams
-using Libz
-using DataFrames
-using Cairo
-using Compose
-using Gadfly
-
-include("../src/types.jl")
-include("../src/input.jl")
-include("../src/themes.jl")
-include("../src/draw.jl")
-include("../src/plots.jl")
-
-dir = dirname(@__FILE__)
 
 @testset "Basic Single Plot" begin
 
