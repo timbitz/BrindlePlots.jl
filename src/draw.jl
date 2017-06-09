@@ -95,9 +95,10 @@ function draw_events( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::
    xmin,xmax = Inf,-Inf
    chr,strand = "",' '
    for i in 1:length(tabs)
-      xregion = draw_event!( layers, tabs[i][tabs[i][:,:Gene] .== geneid,:], node, samples[i], i, colnum )
-      xmin = xregion.first < xmin ? xregion.first : xmin
-      xmax = xregion.last  > xmax ? xregion.last  : xmax
+      event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node )
+      draw_event!( layers, event, node, samples[i], i, colnum )
+      xmin = event.nodeset.range.first < xmin ? xregion.first : xmin
+      xmax = event.nodeset.range.last  > xmax ? xregion.last  : xmax
       chr,strand = xregion.chr,xregion.strand
    end
    draw_metadata!( layers, geneid, node, xmin, length(tabs) + 0.6 )
