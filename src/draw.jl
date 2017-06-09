@@ -1,10 +1,10 @@
 
 const POLYWIDTH = 0.1
 const ARCWIDTH  = 1.0
-const ARCHEIGHT = 0.5
+const ARCHEIGHT = 0.4
 
 function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
-    seq = 0:0.0001:pi
+    seq = 0:0.01:pi
     xseq = seq ./ pi
     xseq = xseq .* (xmax - xmin)
     xseq = xseq .+ xmin
@@ -106,5 +106,7 @@ end
 
 
 
-function draw_synthetic_lane( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}
+function draw_synthetic_lane( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath} )
+
+end
 
