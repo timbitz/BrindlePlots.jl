@@ -48,11 +48,11 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    end
 
    # draw junctions
-   range = length(nodes.range)
+   range = length(event.nodeset.range)
    for edge in edgeset.edges
       (haskey(nodes, edge.first) && haskey(nodes, edge.last)) || continue
-      first = strand ? nodes[edge.first].last : nodes[edge.last].last
-      last  = strand ? nodes[edge.last].first : nodes[edge.first].first
+      first = event.strand ? nodes[edge.first].last : nodes[edge.last].last
+      last  = event.strand ? nodes[edge.last].first : nodes[edge.first].first
       height = (last - first) / range
       upright = (edge.first + 1 == edge.last)
 
@@ -62,12 +62,10 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
                            label=[string(edge.value)], Geom.label(position=:centered))[1] )
 
    end
-   labelpos = upper + range*0.025
+   labelpos = event.nodeset.range.stop + range*0.025
    lonode,hinode = first(edgeset.nodes),last(edgeset.nodes)
-   comp = df[(df[:,:Node] .== node),:Complexity][1]
-   entr = df[(df[:,:Node] .== node),:Entropy][1]
-   strand = df[(df[:,:Node] .== node),:Strand][1]
-   metalab = "Nodes: $lonode-$hinode, $comp, $(string(entr))"
+   strand = event.strand ? "+" : "-"
+   metalab = "Nodes: $lonode-$hinode, $(event.complexity), $(string(event.entropy))"
 
    push!( layers, layer(x=[labelpos], y=[curi+0.1], label=[sample], 
                         Geom.label(position=:right), default_theme())[1] )
@@ -75,8 +73,9 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
                         Geom.label(position=:right), default_theme())[1] ) 
 end
 
-function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, node::Int, xpos, ypos::Float64 )
-   meta = "Gene: $geneid\tNode: $node"
+function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, coord::String, 
+                         node::Int, xpos, ypos::Float64 )
+   meta = "Gene: $geneid\tLSE Range: $coord\tNode: $node"
    push!( layers, layer(x=[xpos], y=[ypos], label=[meta], Geom.label(position=:right), default_theme())[1] )
 end
 
@@ -86,16 +85,18 @@ function draw_events( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::
    colnum = 2 > length(tabs) ? 2 : length(tabs)
    layers = Vector{Gadfly.Layer}()
    xmin,xmax = Inf,-Inf
-   chr,strand = "",' '
+   chr,strand = "",""
    for i in 1:length(tabs)
       event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node )
       draw_event!( layers, event, node, samples[i], i, colnum )
-      xmin = event.nodeset.range.first < xmin ? xregion.first : xmin
-      xmax = event.nodeset.range.last  > xmax ? xregion.last  : xmax
-      chr,strand = xregion.chr,xregion.strand
+      coord = event.nodeset.range
+      xmin = coord.start < xmin ? coord.start : xmin
+      xmax = coord.stop  > xmax ? coord.stop  : xmax
+      chr,strand = event.chr,event.strand ? "+" : "-"
    end
-   draw_metadata!( layers, geneid, node, xmin, length(tabs) + 0.6 )
-   Guide.xlabel(convert(String, BrindleRegion(chr,xmin,xmax,strand))), layers
+   region = "$chr:$xmin-$xmax:$strand"
+   draw_metadata!( layers, geneid, region, node, xmin, length(tabs) + 0.6 )
+   Guide.xlabel(convert(String, chr)), layers
 end
 
 

@@ -28,6 +28,8 @@ immutable BrindleEvent
    nodeset::BrindleNodeSet
    chr::String
    strand::Bool
+   complexity::String
+   entropy::Float64
 end
 
 type BrindlePath
@@ -57,7 +59,7 @@ function Base.parse(::Type{BrindleEdgeSet}, str::String )
    nodes = IntSet()
    maxval = 0.0
    for s in edgestr
-      be = parse(BrindleEdge, s)
+      be = parse(BrindleEdge, String(s))
       push!( edges, be )
       push!( nodes, be.first )
       push!( nodes, be.last  )
@@ -83,8 +85,10 @@ function BrindleEvent( genedf::DataFrame, node::Int )
       lower = lower > cnode.first ? cnode.first : lower
       upper = upper < cnode.last  ? cnode.last  : upper
    end
+   comp = genedf[(genedf[:,:Node] .== node),:Complexity][1]
+   entr = genedf[(genedf[:,:Node] .== node),:Entropy][1]
    nodeset = BrindleNodeSet( nodes, lower:upper )
 
-   BrindleEvent( edgeset, nodeset, chr, strand )
+   BrindleEvent( edgeset, nodeset, chr, strand, comp, entr )
 end
 
