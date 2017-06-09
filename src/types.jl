@@ -1,11 +1,3 @@
-immutable BrindleRegion
-   chr::String
-   first::Int
-   last::Int
-   strand::Char
-end
-
-Base.convert(::Type{String}, br::BrindleRegion) = br.chr * ":" * string(br.first) * "-" * string(br.last) * ":" * string(br.strand)
 
 immutable BrindleNode
    chr::String

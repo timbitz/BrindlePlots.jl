@@ -27,35 +27,28 @@ function draw_event( df::DataFrame, node::Int, sample::String, curi=0, colornum=
    layers
 end
 
-function draw_event!( layers::Vector{Gadfly.Layer},
-                      df::DataFrame, node::Int, sample::String, curi=0, colornum=2 )
+function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::Int, 
+                      sample::String, curi=0, colornum=2 )
    cols = default_colors( colornum )
-   edgeset = parse(BrindleEdgeSet, df[(df[:,:Node] .== node),:Edges][1])
-   nodes = Dict{Int,BrindleNode}()
-   lower,upper = Inf,-Inf
-   chr,strand  = "",true
+   const edgeset = event.edgeset
+   const nodes   = event.nodeset.map
 
    # draw exons
-   for n in edgeset.nodes
-      (length(df[(df[:,:Node] .== n),:Coord]) == 0) && continue
-      psi = df[(df[:,:Node] .== n),:Psi][1]
-      strand = df[(df[:,:Node] .== n),:Strand][1] == "+" ? true : false
-      cnode = parse(BrindleNode, df[(df[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi)
-      chr = cnode.chr
-      nodes[n] = cnode
-      lower = lower > cnode.first ? cnode.first : lower
-      upper = upper < cnode.last  ? cnode.last  : upper
+   for n in keys(nodes)
+      const cnode = nodes[n]
       xset,yset = make_box( cnode.first, cnode.last, curi )
       alphacols  = default_colors( colornum, cnode.psi )
 
       push!( layers, layer(x=xset, y=yset, Geom.polygon(fill=true), polygon_theme(alphacols[curi]))[1] )
       if cnode.psi < 1.0
-         push!( layers, layer(x=[median(cnode.first:cnode.last)], y=[curi], label=[string(cnode.psi)], Geom.label(position=:centered))[1] )
+         push!( layers, layer(x=[median(cnode.first:cnode.last)], 
+                              y=[curi], label=[string(cnode.psi)], 
+                              Geom.label(position=:centered))[1] )
       end
    end
 
    # draw junctions
-   range = upper - lower
+   range = length(nodes.range)
    for edge in edgeset.edges
       (haskey(nodes, edge.first) && haskey(nodes, edge.last)) || continue
       first = strand ? nodes[edge.first].last : nodes[edge.last].last
@@ -76,10 +69,10 @@ function draw_event!( layers::Vector{Gadfly.Layer},
    strand = df[(df[:,:Node] .== node),:Strand][1]
    metalab = "Nodes: $lonode-$hinode, $comp, $(string(entr))"
 
-   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=[sample], Geom.label(position=:right), default_theme())[1] )
-   push!( layers, layer(x=[labelpos], y=[curi-0.05], label=[metalab], Geom.label(position=:right), default_theme())[1] ) 
-
-   BrindleRegion(chr, lower, upper, strand[1])
+   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=[sample], 
+                        Geom.label(position=:right), default_theme())[1] )
+   push!( layers, layer(x=[labelpos], y=[curi-0.05], label=[metalab], 
+                        Geom.label(position=:right), default_theme())[1] ) 
 end
 
 function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, node::Int, xpos, ypos::Float64 )
