@@ -98,7 +98,7 @@ function draw_events( tables::Vector{DataFrame}, samples::Vector{String}, geneid
       chr,strand = event.chr,event.strand ? "+" : "-"
    end
    region = "$chr:$xmin-$xmax:$strand"
-   draw_metadata!( layers, geneid, region, node, xmin, length(tabs) + 0.5 )
+   draw_metadata!( layers, geneid, region, node, xmin, length(tabs) + 0.75 )
    layers, chr, xmin, xmax
 end
 
@@ -130,7 +130,7 @@ function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, ce
                            xend=[center+bandwidth], yend=[positions[i]],
                            Geom.segment, gelband_theme(lengths[i], agarose, psi[i], color))[1] )
    end
-   push!( layers, layer(x=[-1,-1], y=[10,10], color=[0.0,1.0], Geom.point)[1] ) 
+   push!( layers, layer(x=[-10,-10], y=[10,10], color=[0.0,1.0], Geom.point)[1] ) 
 end
 
 function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}, 

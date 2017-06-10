@@ -7,7 +7,9 @@ default_colors( n::Int, opacity::Float64 ) = [(t = convert(Gadfly.RGBA, c);
 
 const DEFAULT_COLOR = default_colors(6)[1]
 
-plot_dimensions( n::Int ) = 24cm, Measures.Length{:mm,Float64}( 10*(4 + n*4) )
+plot_dimensions( n::Int ) = Measures.Length{:mm,Float64}( 10*(22 + n*1.5) ), Measures.Length{:mm,Float64}( 10*(max(5 + n*3.5, 10)) )
+eventplot_dimensions( n::Int ) = 16cm, Measures.Length{:mm,Float64}( 10*(5 + n*3.5) )
+gelplot_dimensions( n::Int ) = Measures.Length{:mm,Float64}( 10*(4 + n*1.5) ), 10cm
 set_plot_size( n::Int ) = set_default_plot_size( plot_dimensions( n )... )
 
 
