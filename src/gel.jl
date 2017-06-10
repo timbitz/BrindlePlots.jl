@@ -25,7 +25,7 @@ function optimal_gel_concentration{ N <: Number}( size::N )
    first = searchsortedfirst( optimalsize, size )
    last = first+1
    index = size - optimalsize[first] > optimalsize[last] - size ? last : first
-   percentage[index]
+   index in 1:length(optimalsize) ? percentage[index] : 1.5
 end
 
 function optimal_gel_concentration{ N <: Number}( lower::N, upper::N )
@@ -33,7 +33,7 @@ function optimal_gel_concentration{ N <: Number}( lower::N, upper::N )
    optimalsize = [(2000 / x ^ 3) for x in percentage]
    first = searchsortedfirst( optimalsize, lower )
    last  = searchsortedlast(  optimalsize, upper )
-   median(percentage[last]:0.1:percentage[first])
+   first < last ? median(percentage[last]:0.1:percentage[first]) : 1.5
 end
 
 function optimal_gel_concentration( paths::Vector{BrindlePathVec} )
