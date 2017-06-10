@@ -14,7 +14,7 @@ function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{St
                        default_theme(), 
                        Guide.title("Local Splicing Event (LSE) Graphs"))
       gellayers,agarose = draw_insilico_gel( tables, samples, geneid, node )
-      gelplot   = plot(gellayers, Coord.cartesian(ymin=DEFAULT_MAXDIST*-1, ymax=5, xmin=-0.75, xmax=length(samples)+0.5), 
+      gelplot   = plot(gellayers, Coord.cartesian(ymin=DEFAULT_MAXDIST*-1 - 3, ymax=5, xmin=-0.75, xmax=length(samples)+0.5), 
                        default_theme(), Guide.xticks(ticks=nothing), Guide.yticks(ticks=nothing),
                        Guide.xlabel(""), Guide.ylabel(""),
                        Guide.title("$(round(agarose,2))% Agarose Gel"))

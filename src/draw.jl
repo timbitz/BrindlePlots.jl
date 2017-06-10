@@ -5,6 +5,8 @@ const ARCHEIGHT = 0.4
 const BANDWIDTH = 0.4
 const BANDTHICK = 2.0
 
+const ALPHABET  = [convert(Char, x) for x in 65:90]
+
 function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
     seq = 0:0.01:pi
     xseq = seq ./ pi
@@ -69,7 +71,7 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    strand = event.strand ? "+" : "-"
    metalab = "Nodes: $lonode-$hinode, $(event.complexity), $(string(event.entropy))"
 
-   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=[sample], 
+   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=["($(ALPHABET[curi])) $sample"], 
                         Geom.label(position=:right), default_theme())[1] )
    push!( layers, layer(x=[labelpos], y=[curi-0.05], label=[metalab], 
                         Geom.label(position=:right), default_theme())[1] ) 
@@ -77,7 +79,7 @@ end
 
 function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, coord::String, 
                          node::Int, xpos, ypos::Float64 )
-   meta = "Gene: $geneid\tLSE Range: $coord\tNode: $node"
+   meta = "Gene: $geneid\tNode: $node\nLSE Range: $coord"
    push!( layers, layer(x=[xpos], y=[ypos], label=[meta], Geom.label(position=:right), default_theme())[1] )
 end
 
@@ -106,6 +108,14 @@ function draw_ladder_labels!( layers::Vector{Gadfly.Layer}, agarose::Float64,
    positions = map( x->migration_distance(x, agarose)*-1, lengths )
    push!( layers, layer(x=[-0.45 for i in 1:length(positions)], y=positions,
                         label=map(string, lengths), Geom.label(position=:left))[1] )
+end
+
+function draw_lane_labels!( layers::Vector{Gadfly.Layer}, totalnum::Int )
+   push!( layers, layer(x=[i for i in 1:totalnum],
+                        y=[DEFAULT_MAXDIST*-1 - 2 for x in 1:totalnum],
+                        label=["($(ALPHABET[i]))" for i in 1:totalnum],
+                        Geom.label(position=:centered))[1] )
+                        
 end
 
 function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, center::Int=0,
