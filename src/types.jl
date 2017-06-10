@@ -32,10 +32,22 @@ immutable BrindleEvent
    entropy::Float64
 end
 
-type BrindlePath
+immutable BrindlePath
    path::IntSet
    length::Int
    psi::Float64
+end
+
+const BrindlePathVec = Vector{BrindlePath}
+
+function Base.parse{S <: AbstractString}(::Type{IntSet}, str::S )
+   is = IntSet()
+   spl = split( str, '-' )
+   for s in spl
+      i = parse(Int, String(s))
+      push!( is, i )
+   end
+   is
 end
 
 function Base.parse(::Type{BrindleNode}, str::String, psi::Float64)
@@ -74,7 +86,6 @@ function BrindleEvent( genedf::DataFrame, node::Int )
    lower,upper = Inf,-Inf
    chr,strand  = "",true
 
-   # draw exons
    for n in edgeset.nodes
       (length(genedf[(genedf[:,:Node] .== n),:Coord]) == 0) && continue
       psi = genedf[(genedf[:,:Node] .== n),:Psi][1]
@@ -90,5 +101,22 @@ function BrindleEvent( genedf::DataFrame, node::Int )
    nodeset = BrindleNodeSet( nodes, lower:upper )
 
    BrindleEvent( edgeset, nodeset, chr, strand, comp, entr )
+end
+
+function Base.push!( paths::Vector{BrindlePath}, event::BrindleEvent, str::String )
+   spl = split( str, ',' )
+   for s in spl
+      path,psistr = split( s, ':' )
+      is = parse(IntSet, path)
+      psi = parse(Float64, String(psistr))
+      length = 0
+      for i in is
+         if haskey(event.nodeset.map, i)
+            node = event.nodeset.map[i]
+            length += node.last - node.first + 1
+         end
+      end
+      push!( paths, BrindlePath(is, length, psi) )
+   end
 end
 

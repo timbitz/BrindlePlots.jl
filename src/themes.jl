@@ -7,12 +7,13 @@ default_colors( n::Int, opacity::Float64 ) = [(t = convert(Gadfly.RGBA, c);
 
 const DEFAULT_COLOR = default_colors(6)[1]
 
-plot_dimensions( n::Int ) = 18cm, Measures.Length{:mm,Float64}( 10*(4 + n*4) )
+plot_dimensions( n::Int ) = 24cm, Measures.Length{:mm,Float64}( 10*(4 + n*4) )
 set_plot_size( n::Int ) = set_default_plot_size( plot_dimensions( n )... )
 
 
 arc_theme( psi::Float64, color=DEFAULT_COLOR ) = Theme(default_color=color, line_width=Measures.Length{:mm,Float64}( psi * ARCWIDTH ))
 polygon_theme( color=DEFAULT_COLOR ) = Theme(default_color=color, discrete_highlight_color=x->colorant"black")
+gelband_theme( size::Int, agarose::Float64, psi::Float64, color=DEFAULT_COLOR ) = Theme(default_color=color, line_width=Measures.Length{:mm,Float64}( migration_proportion( size, agarose )*BANDTHICK / 3 + psi*BANDTHICK / 1.5 )) 
 default_theme() = Theme(default_color=colorant"black")
 
 

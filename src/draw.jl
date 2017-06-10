@@ -2,6 +2,10 @@
 const POLYWIDTH = 0.1
 const ARCWIDTH  = 1.0
 const ARCHEIGHT = 0.4
+const BANDWIDTH = 0.4
+const BANDTHICK = 2.0
+
+const ALPHABET  = [convert(Char, x) for x in 65:90]
 
 function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
     seq = 0:0.01:pi
@@ -21,15 +25,15 @@ make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::F
 make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin] 
 make_box( first::Int, last::Int, number::Int=1) = make_box( first, last, number + POLYWIDTH, number - POLYWIDTH )
 
-function draw_event( df::DataFrame, node::Int, sample::String, curi=0, colornum=2 )
+function draw_event( df::DataFrame, node::Int, sample::String, curi=0, totalnum=2 )
    layers = Vector{Gadfly.Layer}()
-   draw_event!( layers, df, node, sample, curi, colornum )
+   draw_event!( layers, df, node, sample, curi, totalnum )
    layers
 end
 
 function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::Int, 
-                      sample::String, curi=0, colornum=2 )
-   cols = default_colors( colornum )
+                      sample::String, curi=0, totalnum=2 )
+   cols = default_colors( max(totalnum,2) )
    const edgeset = event.edgeset
    const nodes   = event.nodeset.map
 
@@ -37,7 +41,7 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    for n in keys(nodes)
       const cnode = nodes[n]
       xset,yset = make_box( cnode.first, cnode.last, curi )
-      alphacols  = default_colors( colornum, cnode.psi )
+      alphacols  = default_colors( max(totalnum,2), cnode.psi )
 
       push!( layers, layer(x=xset, y=yset, Geom.polygon(fill=true), polygon_theme(alphacols[curi]))[1] )
       if cnode.psi < 1.0
@@ -67,7 +71,7 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    strand = event.strand ? "+" : "-"
    metalab = "Nodes: $lonode-$hinode, $(event.complexity), $(string(event.entropy))"
 
-   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=[sample], 
+   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=["($(ALPHABET[totalnum-curi+1])) $sample"], 
                         Geom.label(position=:right), default_theme())[1] )
    push!( layers, layer(x=[labelpos], y=[curi-0.05], label=[metalab], 
                         Geom.label(position=:right), default_theme())[1] ) 
@@ -75,33 +79,88 @@ end
 
 function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, coord::String, 
                          node::Int, xpos, ypos::Float64 )
-   meta = "Gene: $geneid\tLSE Range: $coord\tNode: $node"
+   meta = "Gene: $geneid\tNode: $node\nLSE Range: $coord"
    push!( layers, layer(x=[xpos], y=[ypos], label=[meta], Geom.label(position=:right), default_theme())[1] )
 end
 
-function draw_events( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::String, node::Int )
-   reverse!(tabs)
-   reverse!(samples)
-   colnum = 2 > length(tabs) ? 2 : length(tabs)
+function draw_events( tables::Vector{DataFrame}, samples::Vector{String}, geneid::String, node::Int )
+   tabs = reverse(tables)
+   sams = reverse(samples)
    layers = Vector{Gadfly.Layer}()
    xmin,xmax = Inf,-Inf
    chr,strand = "",""
    for i in 1:length(tabs)
       event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node )
-      draw_event!( layers, event, node, samples[i], i, colnum )
+      draw_event!( layers, event, node, sams[i], i, length(tabs) )
       coord = event.nodeset.range
       xmin = coord.start < xmin ? coord.start : xmin
       xmax = coord.stop  > xmax ? coord.stop  : xmax
       chr,strand = event.chr,event.strand ? "+" : "-"
    end
    region = "$chr:$xmin-$xmax:$strand"
-   draw_metadata!( layers, geneid, region, node, xmin, length(tabs) + 0.6 )
-   Guide.xlabel(convert(String, chr)), layers
+   draw_metadata!( layers, geneid, region, node, xmin, length(tabs) + 0.5 )
+   layers, chr, xmin, xmax
 end
 
+function draw_ladder_labels!( layers::Vector{Gadfly.Layer}, agarose::Float64,
+                              lengths::Vector{Int}=LADDER_100BP_LENGTH )
+   positions = map( x->migration_distance(x, agarose)*-1, lengths )
+   push!( layers, layer(x=[-0.45 for i in 1:length(positions)], y=positions,
+                        label=map(string, lengths), Geom.label(position=:left))[1] )
+end
 
+function draw_lane_labels!( layers::Vector{Gadfly.Layer}, totalnum::Int )
+   push!( layers, layer(x=[i for i in 1:totalnum],
+                        y=[DEFAULT_MAXDIST*-1 - 1 for x in 1:totalnum],
+                        label=["($(ALPHABET[i]))" for i in 1:totalnum],
+                        Geom.label(position=:centered))[1] )
+                        
+end
 
-function draw_synthetic_lane( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath} )
+function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, center::Int=0,
+                              lengths::Vector{Int}=LADDER_100BP_LENGTH, 
+                              psi::Vector{Float64}=LADDER_100BP_NORMAL,
+                              bandwidth=BANDWIDTH )
+   positions = map( x->migration_distance(x, agarose)*-1, lengths )
+   len       = length(positions)
+   colors    = default_colors( 100, 1.0 )
+   for i in 1:length(positions)
+      color = colors[ Int(ceil(psi[i]*100)) ]
+      push!( layers, layer(x=[center-bandwidth], y=[positions[i]],
+                           xend=[center+bandwidth], yend=[positions[i]],
+                           Geom.segment, gelband_theme(lengths[i], agarose, psi[i], color))[1] )
+   end
+   push!( layers, layer(x=[-1,-1], y=[10,10], color=[0.0,1.0], Geom.point)[1] ) 
+end
 
+function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}, 
+                              agarose::Float64, center::Int, bandwidth=BANDWIDTH )
+   lengths   = map( x->x.length, paths )
+   psi       = map( x->x.psi,    paths )
+   draw_insilico_lane!( layers, agarose, center, lengths, psi, bandwidth )
+end
+
+function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::String, node::Int )
+   layers  = Vector{Gadfly.Layer}()
+   colnum  = 2 > length(tabs) ? 2 : length(tabs)
+   paths   = Vector{BrindlePathVec}()
+   for i in 1:length(tabs)
+      df = tabs[i][tabs[i][:,:Gene] .== geneid,:]
+      event = BrindleEvent( df, node )
+      pathvec = BrindlePathVec()
+      incpath = df[df[:,:Node] .== node,:Inc_Paths][1]
+      !isna(incpath) && push!( pathvec, event, incpath )
+      excpath = df[df[:,:Node] .== node,:Exc_Paths][1]
+      !isna(excpath) && push!( pathvec, event, excpath )
+      push!( paths, pathvec )
+   end
+   agarose = optimal_gel_concentration( paths )
+   draw_insilico_lane!( layers, agarose )
+   for i in 1:length(paths)
+      draw_insilico_lane!( layers, paths[i], agarose, i )
+   end
+   draw_ladder_labels!( layers, agarose )
+   draw_lane_labels!( layers, length(tabs) )
+   layers, agarose
 end
 
