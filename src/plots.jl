@@ -8,10 +8,11 @@ function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{St
       geneid  = String(spl[1])
       nodestr = String(spl[2])
       node    = parse(Int, nodestr)
-      eventlayers,xlab = draw_events( tables, samples, geneid, node )
+      eventlayers,chr,xmin,xmax = draw_events( tables, samples, geneid, node )
+      labelspace = (xmax-xmin)*0.25 + xmax
       set_plot_size(length(tables))
-      eventplot = plot(eventlayers, xlab, Guide.ylabel(""), Guide.yticks(ticks=nothing), 
-                       default_theme(), 
+      eventplot = plot(eventlayers, Guide.xlabel(chr), Guide.ylabel(""), Guide.yticks(ticks=nothing), 
+                       default_theme(), Coord.cartesian(xmin=xmin, xmax=labelspace),
                        Guide.title("Local Splicing Event (LSE) Graphs"))
       gellayers,agarose = draw_insilico_gel( tables, samples, geneid, node )
       gelplot   = plot(gellayers, Coord.cartesian(ymin=DEFAULT_MAXDIST*-1 - 3, ymax=5, xmin=-0.75, xmax=length(samples)+0.5), 
