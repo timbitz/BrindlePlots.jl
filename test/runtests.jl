@@ -1,19 +1,16 @@
 
-using Base.Test
-using BufferedStreams
-using Libz
-using DataFrames
-using Gadfly
+const dir = abspath( splitdir(@__FILE__)[1] )
+unshift!( LOAD_PATH, dir * "/../src" )
 
-include("../src/input.jl")
-include("../src/themes.jl")
-include("../src/draw.jl")
+using Base.Test
+using BrindlePlots
+using BufferedStreams
 
 @testset "Basic Single Plot" begin
-end
 
-samples = ["test.psi.gz", "test2.psi.gz"]
-tabs = load_tables( samples )
-xlab, layers = draw_events( tabs, samples, "ENSG00000117448.13_2", 10 )
-plot_size(2)
-plot(layers, xlab, Guide.ylabel(""), Guide.yticks(label=false), default_theme())
+   delta = BufferedInputStream(IOBuffer("Gene\tNode\tBlank\nENSG00000117448.13_2\t10\tblank\n"))
+   samples = ["test.psi.gz", "test2.psi.gz"]
+   tabs = load_tables( map(x->"$dir/$x", samples) )
+   @test make_plots( delta, tabs, samples, "testplot" ) == true 
+
+end

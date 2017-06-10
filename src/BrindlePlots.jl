@@ -3,16 +3,17 @@
 module BrindlePlots
 
 using Cairo
-using Measures
 using Compose
 using Gadfly
 using BufferedStreams
 using Libz
 using DataFrames
+using Measures
 
 importall Measures
 importall Gadfly
 
+include("types.jl")
 include("input.jl")
 include("themes.jl")
 include("draw.jl")
