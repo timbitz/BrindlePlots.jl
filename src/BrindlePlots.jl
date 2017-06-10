@@ -8,6 +8,7 @@ using Gadfly
 using BufferedStreams
 using Libz
 using DataFrames
+using Distributions
 using Measures
 
 importall Measures

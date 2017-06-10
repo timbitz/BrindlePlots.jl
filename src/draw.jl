@@ -100,7 +100,6 @@ function draw_events( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::
 end
 
 
-
 function draw_synthetic_lane( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath} )
 
 end
