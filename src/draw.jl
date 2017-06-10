@@ -130,6 +130,7 @@ function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, ce
                            xend=[center+bandwidth], yend=[positions[i]],
                            Geom.segment, gelband_theme(lengths[i], agarose, psi[i], color))[1] )
    end
+   push!( layers, layer(x=[-1,-1], y=[10,10], color=[0.0,1.0], Geom.point)[1] ) 
 end
 
 function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}, 

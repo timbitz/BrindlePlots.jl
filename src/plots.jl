@@ -17,7 +17,7 @@ function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{St
       gellayers,agarose = draw_insilico_gel( tables, samples, geneid, node )
       gelplot   = plot(gellayers, Coord.cartesian(ymin=DEFAULT_MAXDIST*-1 - 3, ymax=5, xmin=-0.75, xmax=length(samples)+0.5), 
                        default_theme(), Guide.xticks(ticks=nothing), Guide.yticks(ticks=nothing),
-                       Guide.xlabel(""), Guide.ylabel(""),
+                       Guide.xlabel(""), Guide.ylabel(""), Guide.colorkey("PSI"),
                        Guide.title("$(round(agarose,2))% Agarose Gel"))
       gelgrid   = length(samples) > 2 ? vstack(gelplot, Compose.context()) : gelplot
       draw( PDF("$geneid\_$nodestr\_$(basename(filename)).pdf", plot_dimensions( length(tables) )...), 
