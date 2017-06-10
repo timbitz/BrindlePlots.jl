@@ -86,7 +86,6 @@ function BrindleEvent( genedf::DataFrame, node::Int )
    lower,upper = Inf,-Inf
    chr,strand  = "",true
 
-   # draw exons
    for n in edgeset.nodes
       (length(genedf[(genedf[:,:Node] .== n),:Coord]) == 0) && continue
       psi = genedf[(genedf[:,:Node] .== n),:Psi][1]
@@ -112,8 +111,10 @@ function Base.push!( paths::Vector{BrindlePath}, event::BrindleEvent, str::Strin
       psi = parse(Float64, String(psistr))
       length = 0
       for i in is
-         node = event.nodeset.map[i]
-         length += node.last - node.first + 1
+         if haskey(event.nodeset.map, i)
+            node = event.nodeset.map[i]
+            length += node.last - node.first + 1
+         end
       end
       push!( paths, BrindlePath(is, length, psi) )
    end

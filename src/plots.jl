@@ -7,10 +7,19 @@ function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{St
       spl = split( l, '\t' )
       geneid  = String(spl[1])
       nodestr = String(spl[2])
-      xlab, layers = draw_events( tables, samples, geneid, parse(Int, nodestr) )
+      node    = parse(Int, nodestr)
+      eventlayers,xlab = draw_events( tables, samples, geneid, node )
       set_plot_size(length(tables))
-      toplot = plot(layers, xlab, Guide.ylabel(""), Guide.yticks(label=false), default_theme())
-      draw(PDF("$geneid\_$nodestr\_$(basename(filename)).pdf", plot_dimensions( length(tables) )...), toplot)
+      eventplot = plot(eventlayers, xlab, Guide.ylabel(""), Guide.yticks(ticks=nothing), 
+                       default_theme(), 
+                       Guide.title("Local Splicing Event (LSE) Graphs"))
+      gellayers,agarose = draw_insilico_gel( tables, samples, geneid, node )
+      gelplot   = plot(gellayers, Coord.cartesian(ymin=DEFAULT_MAXDIST*-1, ymax=5, xmin=-0.75, xmax=length(samples)+0.5), 
+                       default_theme(), Guide.xticks(ticks=nothing), Guide.yticks(ticks=nothing),
+                       Guide.xlabel(""), Guide.ylabel(""),
+                       Guide.title("$(round(agarose,2))% Agarose Gel"))
+      draw( PDF("$geneid\_$nodestr\_$(basename(filename)).pdf", plot_dimensions( length(tables) )...), 
+            hstack(eventplot, gelplot) )
    end
    true
 end
