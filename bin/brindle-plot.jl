@@ -67,7 +67,7 @@ function parse_backend( str::String )
                    "ps" => PS,
                    "tex" => PGF)
    if haskey(backends, str)
-      return str == "svgjs" ? "svg" : str,backends[str]
+      return str == "svgjs" ? "js.svg" : str,backends[str]
    else
       println(STDERR, "WARNING: Incorrect value $str supplied to --backend, using PDF instead!")
       return "pdf",PDF
