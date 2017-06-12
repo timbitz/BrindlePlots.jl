@@ -1,7 +1,7 @@
 
 # Code in this file should format multiple plots into a single output format type. 
 
-function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{String}, filename::String )
+function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{String}, filename::String, backend=PDF, ext="pdf" )
    header = readline( delta )
    for l in eachline( delta )
       spl = split( l, '\t' )
@@ -21,7 +21,7 @@ function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{St
                        Guide.title("$(round(agarose,2))% Agarose Gel"))
       grid      = hstack(compose(context(0, 0, eventplot_dimensions(length(tables))...), render(eventplot)),
                          compose(context(0, 0, gelplot_dimensions(length(tables))...), render(gelplot))) 
-      draw( PDF("$geneid\_$nodestr\_$(basename(filename)).pdf", plot_dimensions( length(tables) )...), grid )
+      draw( backend("$geneid\_$nodestr\_$(basename(filename)).$ext", plot_dimensions( length(tables) )...), grid )
    end
    true
 end

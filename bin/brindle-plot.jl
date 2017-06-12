@@ -9,6 +9,7 @@ println( STDERR, "BrindlePlots $ver loading and compiling... " )
 
 using ArgParse
 using Glob
+using Gadfly
 
 push!( LOAD_PATH, dir * "/../src" )
 using BrindlePlots
@@ -37,6 +38,10 @@ function parse_cmd()
       help     = "Directory to search for file patterns or list in -a and -b"
       arg_type = String
       default  = "."
+    "--backend"
+      help     = "Graphics backend to use, options: ('pdf','svg','svgjs','ps','tex')"
+      arg_type = String
+      default  = "pdf"
   end
   return parse_args(s)
 end
@@ -55,10 +60,25 @@ function retrievefilelist( pattern::String, dir::String )
    list
 end
 
+function parse_backend( str::String )
+   backends = Dict("pdf" => PDF,
+                   "svg" => SVG,
+                   "svgjs" => SVGJS,
+                   "ps" => PS,
+                   "tex" => PGF)
+   if haskey(backends, str)
+      return str == "svgjs" ? "svg" : str,backends[str]
+   else
+      println(STDERR, "WARNING: Incorrect value $str supplied to --backend, using PDF instead!")
+      return "pdf",PDF
+   end
+end
+
 function main()
    args  = parse_cmd()
    println(STDERR, " $( round( toq(), 6 ) ) seconds" )
    dir   = fixpath( args["directory"] )
+   ext,backend = parse_backend( args["backend"] )
    lista = retrievefilelist( args["a"], dir )
    full  = lista
    if args["b"] != ""
@@ -71,7 +91,7 @@ function main()
    end
    tables = load_tables( full )
    delta  = open_stream( args["delta"] )
-   make_plots( delta, tables, full, fixpath(args["out"]) )
+   make_plots( delta, tables, full, fixpath(args["out"]), backend, ext )
    close(delta)
 
    println(STDERR, "BrindlePlots $ver done." )
