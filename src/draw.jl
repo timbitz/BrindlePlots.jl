@@ -125,7 +125,7 @@ function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, ce
    len       = length(positions)
    colors    = default_colors( 100, 1.0 )
    for i in 1:length(positions)
-      color = colors[ Int(ceil(psi[i]*100)) ]
+      color = colors[ Int(max(1, ceil(psi[i]*100))) ]
       push!( layers, layer(x=[center-bandwidth], y=[positions[i]],
                            xend=[center+bandwidth], yend=[positions[i]],
                            Geom.segment, gelband_theme(lengths[i], agarose, psi[i], color))[1] )
