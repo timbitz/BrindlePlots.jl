@@ -1,11 +1,13 @@
 
-const POLYWIDTH = 0.1
-const ARCWIDTH  = 1.0
-const ARCHEIGHT = 0.4
-const BANDWIDTH = 0.4
-const BANDTHICK = 2.0
+const POLYWIDTH    = 0.1
+const LABELWIDTH   = 0.05
+const ARCWIDTH     = 1.0
+const ARCHEIGHT    = 0.4
+const MINARCHEIGHT = 0.05
+const BANDWIDTH    = 0.4
+const BANDTHICK    = 2.0
 
-const ALPHABET  = [convert(Char, x) for x in 65:90]
+const ALPHABET     = [convert(Char, x) for x in 65:90]
 
 function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
     seq = 0:0.01:pi
@@ -24,6 +26,7 @@ make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::F
 
 make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin] 
 make_box( first::Int, last::Int, number::Int=1) = make_box( first, last, number + POLYWIDTH, number - POLYWIDTH )
+make_label_box( xpos, ypos, xrange::Int, digits::Int=1 ) = make_box( xpos - (digits/150)*xrange, xpos + (digits/150)*xrange, ypos - LABELWIDTH, ypos + LABELWIDTH ) 
 
 function draw_event( df::DataFrame, node::Int, sample::String, curi=0, totalnum=2 )
    layers = Vector{Gadfly.Layer}()
@@ -43,12 +46,12 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
       xset,yset = make_box( cnode.first, cnode.last, curi )
       alphacols  = default_colors( max(totalnum,2), cnode.psi )
 
-      push!( layers, layer(x=xset, y=yset, Geom.polygon(fill=true), polygon_theme(alphacols[curi]))[1] )
-      if cnode.psi < 1.0
+      if cnode.psi < 0.95
          push!( layers, layer(x=[median(cnode.first:cnode.last)], 
-                              y=[curi], label=[string(cnode.psi)], 
+                              y=[curi], label=[string(round(cnode.psi,2))], 
                               Geom.label(position=:centered))[1] )
       end
+      push!( layers, layer(x=xset, y=yset, Geom.polygon(fill=true), polygon_theme(alphacols[curi]))[1] )
    end
 
    # draw junctions
@@ -57,14 +60,18 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
       (haskey(nodes, edge.first) && haskey(nodes, edge.last)) || continue
       first = event.strand ? nodes[edge.first].last : nodes[edge.last].last
       last  = event.strand ? nodes[edge.last].first : nodes[edge.first].first
-      height = (last - first) / range
+      height = max( (last - first) / range, MINARCHEIGHT )
       upright = (edge.first + 1 == edge.last)
 
       xarc,yarc = make_arc( first, last, curi, upright, height * ARCHEIGHT )
+      labelpos = upright ? maximum(yarc) : minimum(yarc)
+      (height == MINARCHEIGHT) && (labelpos = upright ? labelpos + MINARCHEIGHT*1.5 : labelpos - MINARCHEIGHT*1.5)
+      xlabel,ylabel = make_label_box( median(xarc), labelpos, range, length(string(edge.value)) )
+      push!( layers, layer(x=[median(xarc)], y=[labelpos], label=[string(edge.value)], Geom.label(position=:centered))[1] )
+      if height > MINARCHEIGHT
+         push!( layers, layer(x=xlabel, y=ylabel, Geom.polygon(fill=true), default_theme(colorant"white"))[1] )
+      end
       push!( layers, layer(x=xarc, y=yarc, Geom.path, arc_theme(edge.value / edgeset.maxvalue, cols[curi]))[1] )
-      push!( layers, layer(x=[median(xarc)], y=[(upright ? maximum(yarc)-0.1 : minimum(yarc)+0.115)],
-                           label=[string(edge.value)], Geom.label(position=:centered))[1] )
-
    end
    labelpos = event.nodeset.range.stop + range*0.025
    lonode,hinode = first(edgeset.nodes),last(edgeset.nodes)
