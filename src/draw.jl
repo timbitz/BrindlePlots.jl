@@ -142,6 +142,8 @@ end
 
 function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}, 
                               agarose::Float64, center::Int, bandwidth=BANDWIDTH )
+   low,high  = boundary_nodes( paths )
+   amplified = amplified_paths( paths, low, high )
    lengths   = map( x->x.length, paths )
    psi       = map( x->x.psi,    paths )
    draw_insilico_lane!( layers, agarose, center, lengths, psi, bandwidth )

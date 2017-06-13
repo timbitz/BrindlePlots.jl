@@ -69,3 +69,12 @@ function migration_distance( size::Int, agarose::Float64,
 end
 
 
+function amplified_paths( paths::Vector{BrindlePath}, low::Int, high::Int )
+   res = Vector{BrindlePath}()
+   for p in paths
+      if first(p.path) == low && last(p.path) == high
+         push!( res, p )
+      end
+   end
+   res
+end

@@ -5,7 +5,7 @@ os:
 julia:
   - 0.5
 install:
-  julia -e 'Pkg.add("Gadfly"); Pkg.add("Libz"); Pkg.add("Cairo")'
+  julia dependencies.jl
 notifications:
   email: false
 script:

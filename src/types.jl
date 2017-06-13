@@ -120,3 +120,4 @@ function Base.push!( paths::Vector{BrindlePath}, event::BrindleEvent, str::Strin
    end
 end
 
+boundary_nodes( paths::Vector{BrindlePath} ) = minimum( [first(x.path) for x in paths] ), maximum( [last(x.path) for x in paths] )
