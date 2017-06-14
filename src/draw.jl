@@ -44,9 +44,10 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    for n in keys(nodes)
       const cnode = nodes[n]
       xset,yset = make_box( cnode.first, cnode.last, curi )
-      alphacols  = default_colors( max(totalnum,2), cnode.psi )
+      psi = cnode.kind != "TS" && cnode.kind != "TE" ? cnode.psi : 1.0
+      alphacols  = default_colors( max(totalnum,2), psi )
 
-      if cnode.psi < 0.95
+      if psi < 0.95
          push!( layers, layer(x=[median(cnode.first:cnode.last)], 
                               y=[curi], label=[string(round(cnode.psi,2))], 
                               Geom.label(position=:centered))[1] )
@@ -73,14 +74,16 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
       end
       push!( layers, layer(x=xarc, y=yarc, Geom.path, arc_theme(edge.value / edgeset.maxvalue, cols[curi]))[1] )
    end
+
+   # draw sample labels
    labelpos = event.nodeset.range.stop + range*0.025
    lonode,hinode = first(edgeset.nodes),last(edgeset.nodes)
    strand = event.strand ? "+" : "-"
-   metalab = "Nodes: $lonode-$hinode, $(event.complexity), $(string(event.entropy))"
+   metalab = "Complexity: $(event.complexity)\nEntropy: $(string(event.entropy))"
 
    push!( layers, layer(x=[labelpos], y=[curi+0.1], label=["($(ALPHABET[totalnum-curi+1])) $sample"], 
                         Geom.label(position=:right), default_theme())[1] )
-   push!( layers, layer(x=[labelpos], y=[curi-0.05], label=[metalab], 
+   push!( layers, layer(x=[labelpos], y=[curi-0.1], label=[metalab], 
                         Geom.label(position=:right), default_theme())[1] ) 
 end
 
@@ -147,6 +150,10 @@ function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{Brindl
    draw_insilico_lane!( layers, agarose, center, lengths, psi, bandwidth )
 end
 
+function draw_primer_schematic!( layers::Vector{Gadfly.Layer}, nodes::IntSet, events::Vector{BrindleEvent} )
+    
+end
+
 function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::String, node::Int )
    layers   = Vector{Gadfly.Layer}()
    colnum   = 2 > length(tabs) ? 2 : length(tabs)
@@ -154,12 +161,12 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
    events   = Vector{BrindleEvent}()
    low,high = 0,100000
    for i in 1:length(tabs)
-      df = tabs[i][tabs[i][:,:Gene] .== geneid,:]
-      event = BrindleEvent( df, node )
+      df      = tabs[i][tabs[i][:,:Gene] .== geneid,:]
+      event   = BrindleEvent( df, node )
       pathvec = BrindlePathVec()
       incpath = df[df[:,:Node] .== node,:Inc_Paths][1]
-      !isna(incpath) && push!( pathvec, event, incpath )
       excpath = df[df[:,:Node] .== node,:Exc_Paths][1]
+      !isna(incpath) && push!( pathvec, event, incpath )
       !isna(excpath) && push!( pathvec, event, excpath )
       clow,chigh = boundary_nodes( pathvec )
       low,high = max( low, clow ), min( high, chigh )
@@ -167,13 +174,17 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
       push!( events, event  )
    end
    agarose = optimal_gel_concentration( paths )
-   draw_insilico_lane!( layers, agarose )
+   draw_insilico_lane!( layers, agarose ) # ladder
+   nodes = IntSet()
    for i in 1:length(paths)
       amplified = amplified_paths( paths[i], events[i], low, high )
+      nodes = union( nodes, union([x.path for x in amplified]) )
       draw_insilico_lane!( layers, amplified, agarose, i )
    end
    draw_ladder_labels!( layers, agarose )
    draw_lane_labels!( layers, length(tabs) )
+   draw_primer_schematic!( layers, nodes, events )
    layers, agarose
 end
+
 
