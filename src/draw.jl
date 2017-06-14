@@ -142,17 +142,16 @@ end
 
 function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}, 
                               agarose::Float64, center::Int, bandwidth=BANDWIDTH )
-   low,high  = boundary_nodes( paths )
-   amplified = amplified_paths( paths, low, high )
    lengths   = map( x->x.length, paths )
    psi       = map( x->x.psi,    paths )
    draw_insilico_lane!( layers, agarose, center, lengths, psi, bandwidth )
 end
 
 function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::String, node::Int )
-   layers  = Vector{Gadfly.Layer}()
-   colnum  = 2 > length(tabs) ? 2 : length(tabs)
-   paths   = Vector{BrindlePathVec}()
+   layers   = Vector{Gadfly.Layer}()
+   colnum   = 2 > length(tabs) ? 2 : length(tabs)
+   paths    = Vector{BrindlePathVec}()
+   low,high = 0,100000
    for i in 1:length(tabs)
       df = tabs[i][tabs[i][:,:Gene] .== geneid,:]
       event = BrindleEvent( df, node )
@@ -161,12 +160,15 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
       !isna(incpath) && push!( pathvec, event, incpath )
       excpath = df[df[:,:Node] .== node,:Exc_Paths][1]
       !isna(excpath) && push!( pathvec, event, excpath )
+      clow,chigh = boundary_nodes( pathvec )
+      low,high = max( low, clow ), min( high, chigh )
       push!( paths, pathvec )
    end
    agarose = optimal_gel_concentration( paths )
    draw_insilico_lane!( layers, agarose )
    for i in 1:length(paths)
-      draw_insilico_lane!( layers, paths[i], agarose, i )
+      amplified = amplified_paths( paths[i], low, high )
+      draw_insilico_lane!( layers, amplified, agarose, i )
    end
    draw_ladder_labels!( layers, agarose )
    draw_lane_labels!( layers, length(tabs) )
