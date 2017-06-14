@@ -23,8 +23,8 @@ function check_and_install( pkg; clone=false, checkout=false )
 end
 
 adds = [ "Gadfly",
-         "Libz",
-         "Cairo" ]
+         "Cairo",
+         "Libz" ]
 
 tic()
 Pkg.update()
@@ -32,11 +32,11 @@ map( check_and_install, adds )
 
 println( STDERR, "INFO: Loading and precompiling... " )
 
-using Gadfly
-using Compose
 using Cairo
-using DataStructures
+using Compose
+using Gadfly
 using BufferedStreams
+using DataStructures
 using Libz
 using Measures
 
