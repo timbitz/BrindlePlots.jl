@@ -151,6 +151,7 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
    layers   = Vector{Gadfly.Layer}()
    colnum   = 2 > length(tabs) ? 2 : length(tabs)
    paths    = Vector{BrindlePathVec}()
+   events   = Vector{BrindleEvent}()
    low,high = 0,100000
    for i in 1:length(tabs)
       df = tabs[i][tabs[i][:,:Gene] .== geneid,:]
@@ -163,11 +164,12 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
       clow,chigh = boundary_nodes( pathvec )
       low,high = max( low, clow ), min( high, chigh )
       push!( paths, pathvec )
+      push!( events, event  )
    end
    agarose = optimal_gel_concentration( paths )
    draw_insilico_lane!( layers, agarose )
    for i in 1:length(paths)
-      amplified = amplified_paths( paths[i], low, high )
+      amplified = amplified_paths( paths[i], events[i], low, high )
       draw_insilico_lane!( layers, amplified, agarose, i )
    end
    draw_ladder_labels!( layers, agarose )
