@@ -16,6 +16,6 @@ set_plot_size( n::Int ) = set_default_plot_size( plot_dimensions( n )... )
 arc_theme( psi::Float64, color=DEFAULT_COLOR ) = Theme(default_color=color, line_width=Measures.Length{:mm,Float64}( psi * ARCWIDTH ))
 polygon_theme( color=DEFAULT_COLOR ) = Theme(default_color=color, discrete_highlight_color=x->colorant"black")
 gelband_theme( size::Int, agarose::Float64, psi::Float64, color=DEFAULT_COLOR ) = Theme(default_color=color, line_width=Measures.Length{:mm,Float64}( migration_proportion( size, agarose )*BANDTHICK / 3 + psi*BANDTHICK / 1.5 )) 
-default_theme() = Theme(default_color=colorant"black")
+default_theme( color=colorant"black" ) = Theme(default_color=color)
 
 

@@ -4,6 +4,7 @@ immutable BrindleNode
    first::Int
    last::Int
    psi::Float64
+   kind::String
 end
 
 immutable BrindleEdge
@@ -50,10 +51,10 @@ function Base.parse{S <: AbstractString}(::Type{IntSet}, str::S )
    is
 end
 
-function Base.parse(::Type{BrindleNode}, str::String, psi::Float64)
+function Base.parse(::Type{BrindleNode}, str::String, psi::Float64, kind::String)
    colon  = split( str, ':' )
    ints   = split( string(colon[2]), '-' )
-   BrindleNode( string(colon[1]), parse(Int, string(ints[1])), parse(Int, string(ints[2])), psi )
+   BrindleNode( string(colon[1]), parse(Int, string(ints[1])), parse(Int, string(ints[2])), psi, kind )
 end
 
 function Base.parse(::Type{BrindleEdge}, str::String )
@@ -81,20 +82,23 @@ function Base.parse(::Type{BrindleEdgeSet}, str::String )
 end
 
 function BrindleEvent( genedf::DataFrame, node::Int )
-   edgeset = parse(BrindleEdgeSet, genedf[(genedf[:,:Node] .== node),:Edges][1])
-   nodes = Dict{Int,BrindleNode}()
+   edgeset     = parse(BrindleEdgeSet, genedf[(genedf[:,:Node] .== node),:Edges][1])
+   nodes       = Dict{Int,BrindleNode}()
+   nodearray   = collect( edgeset.nodes )
    lower,upper = Inf,-Inf
    chr,strand  = "",true
-
-   for n in edgeset.nodes
+   
+   for n in nodearray
       (length(genedf[(genedf[:,:Node] .== n),:Coord]) == 0) && continue
-      psi = genedf[(genedf[:,:Node] .== n),:Psi][1]
-      strand = genedf[(genedf[:,:Node] .== n),:Strand][1] == "+" ? true : false
-      cnode = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi)
-      chr = cnode.chr
+      psi      = genedf[(genedf[:,:Node] .== n),:Psi][1]
+      strand   = genedf[(genedf[:,:Node] .== n),:Strand][1] == "+" ? true : false
+      kind     = genedf[(genedf[:,:Node] .== n),:Type][1]
+      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi, kind)
+      chr      = cnode.chr
       nodes[n] = cnode
       lower = lower > cnode.first ? cnode.first : lower
       upper = upper < cnode.last  ? cnode.last  : upper
+      #push_adjacent_ts_te!( nodearray, genedf, n, kind )
    end
    comp = genedf[(genedf[:,:Node] .== node),:Complexity][1]
    entr = genedf[(genedf[:,:Node] .== node),:Entropy][1]
@@ -120,3 +124,12 @@ function Base.push!( paths::Vector{BrindlePath}, event::BrindleEvent, str::Strin
    end
 end
 
+boundary_nodes( paths::Vector{BrindlePath} ) = minimum( [first(x.path) for x in paths] ), maximum( [last(x.path) for x in paths] )
+
+function Base.union( v::Vector{IntSet} )
+   res = IntSet()
+   for i in v
+     res = union( res, i )
+   end
+   res
+end
