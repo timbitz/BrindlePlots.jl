@@ -3,7 +3,7 @@ const POLYWIDTH    = 0.1
 const LABELWIDTH   = 0.05
 const ARCWIDTH     = 1.0
 const ARCHEIGHT    = 0.4
-const MINARCHEIGHT = 0.05
+const MINARCHEIGHT = 0.075
 const BANDWIDTH    = 0.4
 const BANDTHICK    = 2.0
 
