@@ -33,6 +33,17 @@ immutable BrindleEvent
    entropy::Float64
 end
 
+immutable BrindleEventSet
+   events::Vector{BrindleEvent}
+   samples::Vector{String}
+   chr::String
+   strand::Bool
+   lonode::Int
+   hinode::Int
+   xmin::Int
+   xmax::Int
+end
+
 immutable BrindlePath
    path::IntSet
    length::Int
@@ -105,6 +116,24 @@ function BrindleEvent( genedf::DataFrame, node::Int )
    nodeset = BrindleNodeSet( nodes, lower:upper )
 
    BrindleEvent( edgeset, nodeset, chr, strand, comp, entr )
+end
+
+function BrindleEventSet( tabs::Vector{DataFrame}, samples::Vector{String} )
+   events = Vector{BrindleEvent}()
+   xmin,xmax     = Inf,-Inf
+   lonode,hinode = Inf,-Inf
+   chr,strand = "",""
+   for i in 1:length(tabs)
+      event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node )
+      coord = event.nodeset.range
+      xmin = min( coord.start, xmin )
+      xmax = max( coord.stop,  xmax )
+      chr,strand = event.chr,event.strand ? "+" : "-"
+   end   
+   for i in 1:length(tabs)
+      event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node, lonode, hinode )
+      push!( events, event )
+   end
 end
 
 function Base.push!( paths::Vector{BrindlePath}, event::BrindleEvent, str::String )
