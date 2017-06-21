@@ -24,7 +24,8 @@ end
 
 adds = [ "Gadfly",
          "Cairo",
-         "Libz" ]
+         "Libz",
+         "IntervalTrees" ]
 
 tic()
 Pkg.update()
@@ -39,6 +40,7 @@ using BufferedStreams
 using DataStructures
 using Libz
 using Measures
+using IntervalTrees
 
 const dir = abspath( splitdir(@__FILE__)[1] )
 push!( LOAD_PATH, dir * "/src" )

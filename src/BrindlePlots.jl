@@ -10,6 +10,7 @@ using Libz
 using DataFrames
 using Distributions
 using Measures
+using IntervalTrees
 
 importall Measures
 importall Gadfly
