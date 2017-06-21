@@ -69,12 +69,13 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    # draw exons
    for n in keys(nodes)
       const cnode = nodes[n]
-      xset,yset = make_box( cnode.first, cnode.last, curi )
+      first,last = Int(ceil(log10(cnode.first)*1000000)), Int(ceil(log10(cnode.last)*1000000))
+      xset,yset = make_box( first, last, curi )
       psi = cnode.kind != "TS" && cnode.kind != "TE" ? cnode.psi : 1.0
       alphacols  = default_colors( max(totalnum,2), psi )
 
       if psi < 0.95
-         push!( layers, layer(x=[median(cnode.first:cnode.last)], 
+         push!( layers, layer(x=[median(first:last)], 
                               y=[curi], label=[string(round(cnode.psi,2))], 
                               Geom.label(position=:centered))[1] )
       end
@@ -82,12 +83,14 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    end
 
    # draw junctions
-   range  = length(event.nodeset.range)
+   range  = length(Int(ceil(log10(first(event.nodeset.range))*1000000)):Int(ceil(log10(last(event.nodeset.range))*1000000)))
    posmap = IntervalMap{Int,Float64}()
    for edge in edgeset.edges
       (haskey(nodes, edge.first) && haskey(nodes, edge.last)) || continue
       first = event.strand ? nodes[edge.first].last : nodes[edge.last].last
       last  = event.strand ? nodes[edge.last].first : nodes[edge.first].first
+      first = Int(ceil(log10(first)*1000000))
+      last  = Int(ceil(log10(last)*1000000))
       height = max( (last - first) / range, MINARCHEIGHT )
       upright = (edge.first + 1 == edge.last)
 
@@ -139,7 +142,7 @@ function draw_events( tables::Vector{DataFrame}, samples::Vector{String}, geneid
    end
    region = "$chr:$xmin-$xmax:$strand"
    draw_metadata!( layers, geneid, region, node, xmin, length(tabs) + 0.75 )
-   layers, chr, xmin, xmax
+   layers, chr, Int(ceil(log10(xmin)*1000000)), Int(ceil(log10(xmax)*1000000)) #xmin, xmax
 end
 
 function draw_ladder_labels!( layers::Vector{Gadfly.Layer}, agarose::Float64,
