@@ -93,7 +93,9 @@ function BrindleEvent( genedf::DataFrame, node::Int )
       psi      = genedf[(genedf[:,:Node] .== n),:Psi][1]
       strand   = genedf[(genedf[:,:Node] .== n),:Strand][1] == "+" ? true : false
       kind     = genedf[(genedf[:,:Node] .== n),:Type][1]
-      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi, kind)
+      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], 
+                       isna(psi) ? 1.0 : psi, 
+                       isna(kind) ? "NA" : kind)
       chr      = cnode.chr
       nodes[n] = cnode
       lower = lower > cnode.first ? cnode.first : lower
