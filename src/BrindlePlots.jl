@@ -2,7 +2,6 @@ __precompile__()
 
 module BrindlePlots
 
-using Cairo
 using Compose
 using Gadfly
 using BufferedStreams
@@ -10,6 +9,7 @@ using Libz
 using DataFrames
 using Distributions
 using Measures
+using IntervalTrees
 
 importall Measures
 importall Gadfly

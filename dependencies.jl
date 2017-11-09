@@ -23,8 +23,8 @@ function check_and_install( pkg; clone=false, checkout=false )
 end
 
 adds = [ "Gadfly",
-         "Cairo",
-         "Libz" ]
+         "Libz",
+         "IntervalTrees" ]
 
 tic()
 Pkg.update()
@@ -32,13 +32,13 @@ map( check_and_install, adds )
 
 println( STDERR, "INFO: Loading and precompiling... " )
 
-using Cairo
 using Compose
 using Gadfly
 using BufferedStreams
 using DataStructures
 using Libz
 using Measures
+using IntervalTrees
 
 const dir = abspath( splitdir(@__FILE__)[1] )
 push!( LOAD_PATH, dir * "/src" )

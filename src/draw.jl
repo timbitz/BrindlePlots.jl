@@ -15,9 +15,9 @@ function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
     xseq = xseq .* (xmax - xmin)
     xseq = xseq .+ xmin
     seq = upright ? seq : seq .- pi
-    yseq = sin(seq) .* (ymax - ymin)
+    yseq = sin.(seq) .* (ymax - ymin)
     yseq = yseq .+ ymin
-    xseq, yseq
+    collect(xseq), collect(yseq)
 end
 
 make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::Float64=ARCHEIGHT ) = upright ? 
@@ -26,7 +26,33 @@ make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::F
 
 make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin] 
 make_box( first::Int, last::Int, number::Int=1) = make_box( first, last, number + POLYWIDTH, number - POLYWIDTH )
-make_label_box( xpos, ypos, xrange::Int, digits::Int=1 ) = make_box( xpos - (digits/150)*xrange, xpos + (digits/150)*xrange, ypos - LABELWIDTH, ypos + LABELWIDTH ) 
+make_label_box( xpos, ypos, xrange::Int, digits::Int=1 ) = make_box( xpos - (digits/175)*xrange, xpos + (digits/175)*xrange, ypos - LABELWIDTH, ypos + LABELWIDTH ) 
+
+function hasintersection{K,V}( map::IntervalMap{K,V}, xlow::Int, xhigh::Int, ypos::Float64 )
+   for i in intersect( map, Interval(xlow,xhigh) )
+      if ypos - LABELWIDTH <= i.value <= ypos + LABELWIDTH
+         return true
+      end
+   end
+   return false
+end
+
+function unique_arc_label!{K,V}( map::IntervalMap{K,V}, xarc, yarc, height, upright::Bool, xrange::Int )
+   i = length(xarc) >> 1
+   xpos = xarc[i]
+   ypos = yarc[i]
+   (height == MINARCHEIGHT) && (ypos = upright ? ypos + MINARCHEIGHT*1.5 : ypos - MINARCHEIGHT*1.5)
+   l,r = Int(floor(xpos - (4/175)*xrange)), Int(ceil(xpos + (4/175)*xrange))
+   while i < length(xarc) - 25 && hasintersection( map, l, r, ypos )
+      ypos = yarc[i]
+      xpos = xarc[i]
+      (height == MINARCHEIGHT) && (ypos = upright ? ypos + MINARCHEIGHT*1.5 : ypos - MINARCHEIGHT*1.5)
+      l,r = Int(floor(xpos - (4/175)*xrange)), Int(ceil(xpos + (4/175)*xrange))
+      i += 25
+   end
+   map[(l,r)] = ypos
+   xpos,ypos
+end
 
 function draw_event( df::DataFrame, node::Int, sample::String, curi=0, totalnum=2 )
    layers = Vector{Gadfly.Layer}()
@@ -56,7 +82,8 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    end
 
    # draw junctions
-   range = length(event.nodeset.range)
+   range  = length(event.nodeset.range)
+   posmap = IntervalMap{Int,Float64}()
    for edge in edgeset.edges
       (haskey(nodes, edge.first) && haskey(nodes, edge.last)) || continue
       first = event.strand ? nodes[edge.first].last : nodes[edge.last].last
@@ -65,10 +92,9 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
       upright = (edge.first + 1 == edge.last)
 
       xarc,yarc = make_arc( first, last, curi, upright, height * ARCHEIGHT )
-      labelpos = upright ? maximum(yarc) : minimum(yarc)
-      (height == MINARCHEIGHT) && (labelpos = upright ? labelpos + MINARCHEIGHT*1.5 : labelpos - MINARCHEIGHT*1.5)
-      xlabel,ylabel = make_label_box( median(xarc), labelpos, range, length(string(edge.value)) )
-      push!( layers, layer(x=[median(xarc)], y=[labelpos], label=[string(edge.value)], Geom.label(position=:centered))[1] )
+      xpos,ypos = unique_arc_label!( posmap, xarc, yarc, height, upright, range )
+      xlabel,ylabel = make_label_box( xpos, ypos, range, length(string(edge.value)) )
+      push!( layers, layer(x=[xpos], y=[ypos], label=[string(convert(Int,floor(edge.value)))], Geom.label(position=:centered))[1] )
       if height > MINARCHEIGHT
          push!( layers, layer(x=xlabel, y=ylabel, Geom.polygon(fill=true), default_theme(colorant"white"))[1] )
       end
@@ -97,15 +123,19 @@ function draw_events( tables::Vector{DataFrame}, samples::Vector{String}, geneid
    tabs = reverse(tables)
    sams = reverse(samples)
    layers = Vector{Gadfly.Layer}()
+   events = Vector{BrindleEvent}()
    xmin,xmax = Inf,-Inf
    chr,strand = "",""
    for i in 1:length(tabs)
       event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node )
-      draw_event!( layers, event, node, sams[i], i, length(tabs) )
+      push!( events, event )
       coord = event.nodeset.range
       xmin = coord.start < xmin ? coord.start : xmin
       xmax = coord.stop  > xmax ? coord.stop  : xmax
       chr,strand = event.chr,event.strand ? "+" : "-"
+   end
+   for i in 1:length(events)
+      draw_event!( layers, events[i], node, sams[i], i, length(tabs) )
    end
    region = "$chr:$xmin-$xmax:$strand"
    draw_metadata!( layers, geneid, region, node, xmin, length(tabs) + 0.75 )
@@ -130,10 +160,10 @@ end
 function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, center::Int=0,
                               lengths::Vector{Int}=LADDER_100BP_LENGTH, 
                               psi::Vector{Float64}=LADDER_100BP_NORMAL,
-                              bandwidth=BANDWIDTH )
+                              bandwidth=BANDWIDTH;
+                              colors=default_colors( 100, 1.0 ))
    positions = map( x->migration_distance(x, agarose)*-1, lengths )
    len       = length(positions)
-   colors    = default_colors( 100, 1.0 )
    for i in 1:length(positions)
       color = colors[ Int(max(1, ceil(psi[i]*100))) ]
       push!( layers, layer(x=[center-bandwidth], y=[positions[i]],
@@ -174,7 +204,7 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
       push!( events, event  )
    end
    agarose = optimal_gel_concentration( paths )
-   draw_insilico_lane!( layers, agarose ) # ladder
+   draw_insilico_lane!( layers, agarose, colors=greyscale_colors( 100 ) ) # ladder
    nodes = IntSet()
    for i in 1:length(paths)
       amplified = amplified_paths( paths[i], events[i], low, high )

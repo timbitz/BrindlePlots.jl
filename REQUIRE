@@ -1,5 +1,4 @@
-julia 0.5
-Cairo
+julia 0.6
 Measures
 Compose
 Gadfly

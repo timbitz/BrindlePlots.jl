@@ -33,6 +33,17 @@ immutable BrindleEvent
    entropy::Float64
 end
 
+immutable BrindleEventSet
+   events::Vector{BrindleEvent}
+   samples::Vector{String}
+   chr::String
+   strand::Bool
+   lonode::Int
+   hinode::Int
+   xmin::Int
+   xmax::Int
+end
+
 immutable BrindlePath
    path::IntSet
    length::Int
@@ -107,6 +118,51 @@ function BrindleEvent( genedf::DataFrame, node::Int )
    nodeset = BrindleNodeSet( nodes, lower:upper )
 
    BrindleEvent( edgeset, nodeset, chr, strand, comp, entr )
+end
+
+function BrindleEvent( genedf::DataFrame, node::Int, lonode::Int, hinode::Int )
+   edgeset     = parse(BrindleEdgeSet, genedf[(genedf[:,:Node] .== node),:Edges][1])
+   nodes       = Dict{Int,BrindleNode}()
+   nodearray   = collect( edgeset.nodes )
+   lower,upper = Inf,-Inf
+   chr,strand  = "",true
+
+   for n in lonode:hinode
+      (length(genedf[(genedf[:,:Node] .== n),:Coord]) == 0) && continue
+      psi      = genedf[(genedf[:,:Node] .== n),:Psi][1]
+      strand   = genedf[(genedf[:,:Node] .== n),:Strand][1] == "+" ? true : false
+      kind     = genedf[(genedf[:,:Node] .== n),:Type][1]
+      edges    = parse(BrindleEdgeSet, genedf[(genedf[:,:Node] .== n),:Edges][1])
+      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi, kind)
+      chr      = cnode.chr
+      nodes[n] = cnode
+      lower = lower > cnode.first ? cnode.first : lower
+      upper = upper < cnode.last  ? cnode.last  : upper
+      #push_adjacent_ts_te!( nodearray, genedf, n, kind )
+   end
+   comp = genedf[(genedf[:,:Node] .== node),:Complexity][1]
+   entr = genedf[(genedf[:,:Node] .== node),:Entropy][1]
+   nodeset = BrindleNodeSet( nodes, lower:upper )
+
+   BrindleEvent( edgeset, nodeset, chr, strand, comp, entr )
+end
+
+function BrindleEventSet( tabs::Vector{DataFrame}, samples::Vector{String} )
+   events = Vector{BrindleEvent}()
+   xmin,xmax     = Inf,-Inf
+   lonode,hinode = Inf,-Inf
+   chr,strand = "",""
+   for i in 1:length(tabs)
+      event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node )
+      coord = event.nodeset.range
+      xmin = min( coord.start, xmin )
+      xmax = max( coord.stop,  xmax )
+      chr,strand = event.chr,event.strand ? "+" : "-"
+   end   
+   for i in 1:length(tabs)
+      event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node, lonode, hinode )
+      push!( events, event )
+   end
 end
 
 function Base.push!( paths::Vector{BrindlePath}, event::BrindleEvent, str::String )
