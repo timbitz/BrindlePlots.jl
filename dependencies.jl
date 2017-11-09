@@ -23,7 +23,6 @@ function check_and_install( pkg; clone=false, checkout=false )
 end
 
 adds = [ "Gadfly",
-         "Cairo",
          "Libz",
          "IntervalTrees" ]
 
@@ -33,7 +32,6 @@ map( check_and_install, adds )
 
 println( STDERR, "INFO: Loading and precompiling... " )
 
-using Cairo
 using Compose
 using Gadfly
 using BufferedStreams

@@ -1,7 +1,7 @@
 
 # Code in this file should format multiple plots into a single output format type. 
 
-function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{String}, filename::String, backend=SVG, ext="svg" )
+function make_plots( delta::BufIn, tables::Vector{DataFrame}, samples::Vector{String}, filename::String, backend=SVGJS, ext="js.svg" )
    header = readline( delta )
    for l in eachline( delta )
       spl = split( l, '\t' )

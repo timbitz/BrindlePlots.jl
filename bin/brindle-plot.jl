@@ -39,9 +39,9 @@ function parse_cmd()
       arg_type = String
       default  = "."
     "--backend"
-      help     = "Graphics backend to use, options: ('svg','svgjs','ps','tex')"
+      help     = "Graphics backend to use, options: ('svg','svgjs')" #,'ps','tex')"
       arg_type = String
-      default  = "svg"
+      default  = "svgjs"
   end
   return parse_args(s)
 end
@@ -69,8 +69,8 @@ function parse_backend( str::String )
    if haskey(backends, str)
       return str == "svgjs" ? "js.svg" : str,backends[str]
    else
-      println(STDERR, "WARNING: Incorrect value $str supplied to --backend, using SVG instead!")
-      return "svg",SVG
+      println(STDERR, "WARNING: Incorrect value $str supplied to --backend, using SVGJS instead!")
+      return "svgjs",SVGJS
    end
 end
 
