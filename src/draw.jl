@@ -15,7 +15,7 @@ function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
     xseq = xseq .* (xmax - xmin)
     xseq = xseq .+ xmin
     seq = upright ? seq : seq .- pi
-    yseq = sin(seq) .* (ymax - ymin)
+    yseq = sin.(seq) .* (ymax - ymin)
     yseq = yseq .+ ymin
     collect(xseq), collect(yseq)
 end

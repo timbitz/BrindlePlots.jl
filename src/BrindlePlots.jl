@@ -2,7 +2,6 @@ __precompile__()
 
 module BrindlePlots
 
-using Cairo
 using Compose
 using Gadfly
 using BufferedStreams

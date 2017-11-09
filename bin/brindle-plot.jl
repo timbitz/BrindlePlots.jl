@@ -39,9 +39,9 @@ function parse_cmd()
       arg_type = String
       default  = "."
     "--backend"
-      help     = "Graphics backend to use, options: ('pdf','svg','svgjs','ps','tex')"
+      help     = "Graphics backend to use, options: ('svg','svgjs','ps','tex')"
       arg_type = String
-      default  = "pdf"
+      default  = "svg"
   end
   return parse_args(s)
 end
@@ -61,7 +61,7 @@ function retrievefilelist( pattern::String, dir::String )
 end
 
 function parse_backend( str::String )
-   backends = Dict("pdf" => PDF,
+   backends = Dict(#"pdf" => PDF,
                    "svg" => SVG,
                    "svgjs" => SVGJS,
                    "ps" => PS,
@@ -69,8 +69,8 @@ function parse_backend( str::String )
    if haskey(backends, str)
       return str == "svgjs" ? "js.svg" : str,backends[str]
    else
-      println(STDERR, "WARNING: Incorrect value $str supplied to --backend, using PDF instead!")
-      return "pdf",PDF
+      println(STDERR, "WARNING: Incorrect value $str supplied to --backend, using SVG instead!")
+      return "svg",SVG
    end
 end
 
