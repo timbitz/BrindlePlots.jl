@@ -3,6 +3,9 @@ uuid = "56fe4626-0381-11ea-3479-ab5b09f648f2"
 authors = ["Garrett Massman <gmassman20@gmail.com>", "Tim Sterne-Weiler <tim.sterne.weiler@utoronto.ca>"]
 version = "0.1.0"
 
+[compat]
+julia = "^1.0"
+
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 BufferedStreams = "e1450e63-4bb3-523b-b2a4-4ffa8c0fd77d"
