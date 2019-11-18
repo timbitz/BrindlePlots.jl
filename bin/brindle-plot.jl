@@ -1,11 +1,11 @@
 #!/usr/bin/env julia
 # Tim Sterne-Weiler 2017
 
-const dir = abspath( splitdir(@__FILE__)[1] )
-const ver = chomp(readline(open(dir * "/VERSION")))
+dir = abspath( splitdir(@__FILE__)[1] )
+ver = chomp(readline(open(dir * "/VERSION")))
 
-tic()
-println( STDERR, "BrindlePlots $ver loading and compiling... " )
+start = time()
+println( stderr, "BrindlePlots $ver loading and compiling... " )
 
 using ArgParse
 using Glob
@@ -69,14 +69,14 @@ function parse_backend( str::String )
    if haskey(backends, str)
       return str == "svgjs" ? "js.svg" : str,backends[str]
    else
-      println(STDERR, "WARNING: Incorrect value $str supplied to --backend, using SVGJS instead!")
+      println(stderr, "WARNING: Incorrect value $str supplied to --backend, using SVGJS instead!")
       return "svgjs",SVGJS
    end
 end
 
 function main()
    args  = parse_cmd()
-   println(STDERR, " $( round( toq(), 6 ) ) seconds" )
+   println(stderr, " $( round( time() - start, 6 ) ) seconds" )
    dir   = fixpath( args["directory"] )
    ext,backend = parse_backend( args["backend"] )
    lista = retrievefilelist( args["a"], dir )
@@ -94,7 +94,7 @@ function main()
    make_plots( delta, tables, full, fixpath(args["out"]), backend, ext )
    close(delta)
 
-   println(STDERR, "BrindlePlots $ver done." )
+   println(stderr, "BrindlePlots $ver done." )
 end
 
 main()

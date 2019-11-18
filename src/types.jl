@@ -1,5 +1,5 @@
 
-immutable BrindleNode
+struct BrindleNode
    chr::String
    first::Int
    last::Int
@@ -7,24 +7,24 @@ immutable BrindleNode
    kind::String
 end
 
-immutable BrindleEdge
+struct BrindleEdge
    first::Int
    last::Int
    value::Float64
 end
 
-type BrindleEdgeSet
+mutable struct BrindleEdgeSet
    edges::Vector{BrindleEdge}
-   nodes::IntSet
+   nodes::BitSet
    maxvalue::Float64
 end
 
-type BrindleNodeSet
+mutable struct BrindleNodeSet
    map::Dict{Int,BrindleNode}
    range::UnitRange
 end
 
-immutable BrindleEvent
+struct BrindleEvent
    edgeset::BrindleEdgeSet
    nodeset::BrindleNodeSet
    chr::String
@@ -33,7 +33,7 @@ immutable BrindleEvent
    entropy::Float64
 end
 
-immutable BrindleEventSet
+struct BrindleEventSet
    events::Vector{BrindleEvent}
    samples::Vector{String}
    chr::String
@@ -44,16 +44,16 @@ immutable BrindleEventSet
    xmax::Int
 end
 
-immutable BrindlePath
-   path::IntSet
+struct BrindlePath
+   path::BitSet
    length::Int
    psi::Float64
 end
 
-const BrindlePathVec = Vector{BrindlePath}
+BrindlePathVec = Vector{BrindlePath}
 
-function Base.parse{S <: AbstractString}(::Type{IntSet}, str::S )
-   is = IntSet()
+function Base.parse(::Type{BitSet}, str::S ) where S <: AbstractString
+   is = BitSet()
    spl = split( str, '-' )
    for s in spl
       i = parse(Int, String(s))
@@ -62,8 +62,8 @@ function Base.parse{S <: AbstractString}(::Type{IntSet}, str::S )
    is
 end
 
-function Base.parse(::Type{BrindleNode}, str::String, psi::Float64, kind::String)
-   colon  = split( str, ':' )
+function Base.parse(::Type{BrindleNode}, coord::String, psi::Float64, kind::String)
+   colon  = split( coord, ':' )
    ints   = split( string(colon[2]), '-' )
    BrindleNode( string(colon[1]), parse(Int, string(ints[1])), parse(Int, string(ints[2])), psi, kind )
 end
@@ -80,7 +80,7 @@ end
 function Base.parse(::Type{BrindleEdgeSet}, str::String )
    edgestr = split( str, ',' )
    edges = Vector{BrindleEdge}()
-   nodes = IntSet()
+   nodes = BitSet()
    maxval = 0.0
    for s in edgestr
       be = parse(BrindleEdge, String(s))
@@ -98,15 +98,15 @@ function BrindleEvent( genedf::DataFrame, node::Int )
    nodearray   = collect( edgeset.nodes )
    lower,upper = Inf,-Inf
    chr,strand  = "",true
-   
+
    for n in nodearray
       (length(genedf[(genedf[:,:Node] .== n),:Coord]) == 0) && continue
       psi      = genedf[(genedf[:,:Node] .== n),:Psi][1]
       strand   = genedf[(genedf[:,:Node] .== n),:Strand][1] == "+" ? true : false
       kind     = genedf[(genedf[:,:Node] .== n),:Type][1]
-      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], 
-                       isna(psi) ? 1.0 : psi, 
-                       isna(kind) ? "NA" : kind)
+      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1],
+                       ismissing(psi) || psi == "NA" ? 1.0 : (isa(psi, String) ? parse(Float64, psi) : 1.0),
+                       ismissing(kind) || kind == "NA" ? "NA" : kind)
       chr      = cnode.chr
       nodes[n] = cnode
       lower = lower > cnode.first ? cnode.first : lower
@@ -116,8 +116,8 @@ function BrindleEvent( genedf::DataFrame, node::Int )
    comp = genedf[(genedf[:,:Node] .== node),:Complexity][1]
    entr = genedf[(genedf[:,:Node] .== node),:Entropy][1]
    nodeset = BrindleNodeSet( nodes, lower:upper )
-
-   BrindleEvent( edgeset, nodeset, chr, strand, comp, entr )
+   entr64 = isa(entr, String) ? parse(Float64, entr) : entr
+   BrindleEvent( edgeset, nodeset, chr, strand, comp, entr64 )
 end
 
 function BrindleEvent( genedf::DataFrame, node::Int, lonode::Int, hinode::Int )
@@ -133,7 +133,7 @@ function BrindleEvent( genedf::DataFrame, node::Int, lonode::Int, hinode::Int )
       strand   = genedf[(genedf[:,:Node] .== n),:Strand][1] == "+" ? true : false
       kind     = genedf[(genedf[:,:Node] .== n),:Type][1]
       edges    = parse(BrindleEdgeSet, genedf[(genedf[:,:Node] .== n),:Edges][1])
-      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], isna(psi) ? 1.0 : psi, kind)
+      cnode    = parse(BrindleNode, genedf[(genedf[:,:Node] .== n),:Coord][1], ismissing(psi) || psi == "NA" ? 1.0 : psi, kind)
       chr      = cnode.chr
       nodes[n] = cnode
       lower = lower > cnode.first ? cnode.first : lower
@@ -143,8 +143,8 @@ function BrindleEvent( genedf::DataFrame, node::Int, lonode::Int, hinode::Int )
    comp = genedf[(genedf[:,:Node] .== node),:Complexity][1]
    entr = genedf[(genedf[:,:Node] .== node),:Entropy][1]
    nodeset = BrindleNodeSet( nodes, lower:upper )
-
-   BrindleEvent( edgeset, nodeset, chr, strand, comp, entr )
+   entr64 = isa(entr, String) ? parse(Float64, entr) : entr
+   BrindleEvent( edgeset, nodeset, chr, strand, comp, entr64 )
 end
 
 function BrindleEventSet( tabs::Vector{DataFrame}, samples::Vector{String} )
@@ -158,7 +158,7 @@ function BrindleEventSet( tabs::Vector{DataFrame}, samples::Vector{String} )
       xmin = min( coord.start, xmin )
       xmax = max( coord.stop,  xmax )
       chr,strand = event.chr,event.strand ? "+" : "-"
-   end   
+   end
    for i in 1:length(tabs)
       event = BrindleEvent( tabs[i][tabs[i][:,:Gene] .== geneid,:], node, lonode, hinode )
       push!( events, event )
@@ -169,7 +169,7 @@ function Base.push!( paths::Vector{BrindlePath}, event::BrindleEvent, str::Strin
    spl = split( str, ',' )
    for s in spl
       path,psistr = split( s, ':' )
-      is = parse(IntSet, path)
+      is = parse(BitSet, path)
       psi = parse(Float64, String(psistr))
       length = 0
       for i in is
@@ -184,8 +184,8 @@ end
 
 boundary_nodes( paths::Vector{BrindlePath} ) = minimum( [first(x.path) for x in paths] ), maximum( [last(x.path) for x in paths] )
 
-function Base.union( v::Vector{IntSet} )
-   res = IntSet()
+function Base.union( v::Vector{BitSet} )
+   res = BitSet()
    for i in v
      res = union( res, i )
    end

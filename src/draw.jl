@@ -1,13 +1,13 @@
 
-const POLYWIDTH    = 0.1
-const LABELWIDTH   = 0.05
-const ARCWIDTH     = 1.0
-const ARCHEIGHT    = 0.4
-const MINARCHEIGHT = 0.075
-const BANDWIDTH    = 0.4
-const BANDTHICK    = 2.0
+global const POLYWIDTH    = 0.1
+global const LABELWIDTH   = 0.05
+global const ARCWIDTH     = 1.0
+global const ARCHEIGHT    = 0.4
+global const MINARCHEIGHT = 0.075
+global const BANDWIDTH    = 0.4
+global const BANDTHICK    = 2.0
 
-const ALPHABET     = [convert(Char, x) for x in 65:90]
+global const ALPHABET     = [convert(Char, x) for x in 65:90]
 
 function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
     seq = 0:0.01:pi
@@ -20,15 +20,15 @@ function make_arc( xmin, xmax, ymin, ymax, upright::Bool=true )
     collect(xseq), collect(yseq)
 end
 
-make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::Float64=ARCHEIGHT ) = upright ? 
+make_arc( left::Int, right::Int, number::Int=1, upright::Bool=true, archeight::Float64=ARCHEIGHT ) = upright ?
                                         make_arc( left, right, number + POLYWIDTH, number + (POLYWIDTH + archeight) ) :
                                         make_arc( left, right, number - POLYWIDTH, number - (POLYWIDTH + archeight) )
 
-make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin] 
+make_box( xmin, xmax, ymin, ymax ) = [xmin, xmin, xmax, xmax], [ymin, ymax, ymax, ymin]
 make_box( first::Int, last::Int, number::Int=1) = make_box( first, last, number + POLYWIDTH, number - POLYWIDTH )
-make_label_box( xpos, ypos, xrange::Int, digits::Int=1 ) = make_box( xpos - (digits/175)*xrange, xpos + (digits/175)*xrange, ypos - LABELWIDTH, ypos + LABELWIDTH ) 
+make_label_box( xpos, ypos, xrange::Int, digits::Int=1 ) = make_box( xpos - (digits/175)*xrange, xpos + (digits/175)*xrange, ypos - LABELWIDTH, ypos + LABELWIDTH )
 
-function hasintersection{K,V}( map::IntervalMap{K,V}, xlow::Int, xhigh::Int, ypos::Float64 )
+function hasintersection( map::IntervalMap{K,V}, xlow::Int, xhigh::Int, ypos::Float64 ) where {K, V}
    for i in intersect( map, Interval(xlow,xhigh) )
       if ypos - LABELWIDTH <= i.value <= ypos + LABELWIDTH
          return true
@@ -37,7 +37,7 @@ function hasintersection{K,V}( map::IntervalMap{K,V}, xlow::Int, xhigh::Int, ypo
    return false
 end
 
-function unique_arc_label!{K,V}( map::IntervalMap{K,V}, xarc, yarc, height, upright::Bool, xrange::Int )
+function unique_arc_label!( map::IntervalMap{K,V}, xarc, yarc, height, upright::Bool, xrange::Int ) where {K, V}
    i = length(xarc) >> 1
    xpos = xarc[i]
    ypos = yarc[i]
@@ -60,22 +60,22 @@ function draw_event( df::DataFrame, node::Int, sample::String, curi=0, totalnum=
    layers
 end
 
-function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::Int, 
+function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::Int,
                       sample::String, curi=0, totalnum=2 )
    cols = default_colors( max(totalnum,2) )
-   const edgeset = event.edgeset
-   const nodes   = event.nodeset.map
+   edgeset = event.edgeset
+   nodes = event.nodeset.map
 
    # draw exons
    for n in keys(nodes)
-      const cnode = nodes[n]
+      cnode = nodes[n]
       xset,yset = make_box( cnode.first, cnode.last, curi )
       psi = cnode.kind != "TS" && cnode.kind != "TE" ? cnode.psi : 1.0
       alphacols  = default_colors( max(totalnum,2), psi )
 
       if psi < 0.95
-         push!( layers, layer(x=[median(cnode.first:cnode.last)], 
-                              y=[curi], label=[string(round(cnode.psi,2))], 
+         push!( layers, layer(x=[median(cnode.first:cnode.last)],
+                              y=[curi], label=[string(round(cnode.psi, digits=2))],
                               Geom.label(position=:centered))[1] )
       end
       push!( layers, layer(x=xset, y=yset, Geom.polygon(fill=true), polygon_theme(alphacols[curi]))[1] )
@@ -107,13 +107,13 @@ function draw_event!( layers::Vector{Gadfly.Layer}, event::BrindleEvent, node::I
    strand = event.strand ? "+" : "-"
    metalab = "Complexity: $(event.complexity)\nEntropy: $(string(event.entropy))"
 
-   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=["($(ALPHABET[totalnum-curi+1])) $sample"], 
+   push!( layers, layer(x=[labelpos], y=[curi+0.1], label=["($(ALPHABET[totalnum-curi+1])) $sample"],
                         Geom.label(position=:right), default_theme())[1] )
-   push!( layers, layer(x=[labelpos], y=[curi-0.1], label=[metalab], 
-                        Geom.label(position=:right), default_theme())[1] ) 
+   push!( layers, layer(x=[labelpos], y=[curi-0.1], label=[metalab],
+                        Geom.label(position=:right), default_theme())[1] )
 end
 
-function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, coord::String, 
+function draw_metadata!( layers::Vector{Gadfly.Layer}, geneid::String, coord::String,
                          node::Int, xpos, ypos::Float64 )
    meta = "Gene: $geneid\tNode: $node\nLSE Range: $coord"
    push!( layers, layer(x=[xpos], y=[ypos], label=[meta], Geom.label(position=:right), default_theme())[1] )
@@ -154,11 +154,11 @@ function draw_lane_labels!( layers::Vector{Gadfly.Layer}, totalnum::Int )
                         y=[DEFAULT_MAXDIST*-1 - 1 for x in 1:totalnum],
                         label=["($(ALPHABET[i]))" for i in 1:totalnum],
                         Geom.label(position=:centered))[1] )
-                        
+
 end
 
 function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, center::Int=0,
-                              lengths::Vector{Int}=LADDER_100BP_LENGTH, 
+                              lengths::Vector{Int}=LADDER_100BP_LENGTH,
                               psi::Vector{Float64}=LADDER_100BP_NORMAL,
                               bandwidth=BANDWIDTH;
                               colors=default_colors( 100, 1.0 ))
@@ -170,18 +170,18 @@ function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, agarose::Float64, ce
                            xend=[center+bandwidth], yend=[positions[i]],
                            Geom.segment, gelband_theme(lengths[i], agarose, psi[i], color))[1] )
    end
-   push!( layers, layer(x=[-10,-10], y=[10,10], color=[0.0,1.0], Geom.point)[1] ) 
+   push!( layers, layer(x=[-10,-10], y=[10,10], color=[0.0,1.0], Geom.point)[1] )
 end
 
-function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath}, 
+function draw_insilico_lane!( layers::Vector{Gadfly.Layer}, paths::Vector{BrindlePath},
                               agarose::Float64, center::Int, bandwidth=BANDWIDTH )
    lengths   = map( x->x.length, paths )
    psi       = map( x->x.psi,    paths )
    draw_insilico_lane!( layers, agarose, center, lengths, psi, bandwidth )
 end
 
-function draw_primer_schematic!( layers::Vector{Gadfly.Layer}, nodes::IntSet, events::Vector{BrindleEvent} )
-    
+function draw_primer_schematic!( layers::Vector{Gadfly.Layer}, nodes::BitSet, events::Vector{BrindleEvent} )
+
 end
 
 function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, geneid::String, node::Int )
@@ -196,8 +196,8 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
       pathvec = BrindlePathVec()
       incpath = df[df[:,:Node] .== node,:Inc_Paths][1]
       excpath = df[df[:,:Node] .== node,:Exc_Paths][1]
-      !isna(incpath) && push!( pathvec, event, incpath )
-      !isna(excpath) && push!( pathvec, event, excpath )
+      !ismissing(incpath) && push!( pathvec, event, incpath )
+      !ismissing(excpath) && push!( pathvec, event, excpath )
       clow,chigh = boundary_nodes( pathvec )
       low,high = max( low, clow ), min( high, chigh )
       push!( paths, pathvec )
@@ -205,7 +205,7 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
    end
    agarose = optimal_gel_concentration( paths )
    draw_insilico_lane!( layers, agarose, colors=greyscale_colors( 100 ) ) # ladder
-   nodes = IntSet()
+   nodes = BitSet()
    for i in 1:length(paths)
       amplified = amplified_paths( paths[i], events[i], low, high )
       nodes = union( nodes, union([x.path for x in amplified]) )
@@ -216,5 +216,3 @@ function draw_insilico_gel( tabs::Vector{DataFrame}, samples::Vector{String}, ge
    draw_primer_schematic!( layers, nodes, events )
    layers, agarose
 end
-
-

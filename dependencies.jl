@@ -1,4 +1,5 @@
 #!/usr/bin/env julia
+# TODO remove this file after we make sure it isn't necessary
 
 function check_and_install( pkg; clone=false, checkout=false )
    print( STDERR, "Checking $pkg ... " )
@@ -24,7 +25,8 @@ end
 
 adds = [ "Gadfly",
          "Libz",
-         "IntervalTrees" ]
+         "IntervalTrees",
+         "ArgParse", "Glob", "Compose", "BufferedStreams", "DataStructures", "Measures", "DataFrames", "Distributions" ]
 
 tic()
 Pkg.update()
@@ -40,7 +42,8 @@ using Libz
 using Measures
 using IntervalTrees
 
-const dir = abspath( splitdir(@__FILE__)[1] )
+# const dir = abspath( splitdir(@__FILE__)[1] )
+dir = abspath( splitdir(@__FILE__)[1] )
 push!( LOAD_PATH, dir * "/src" )
 using BrindlePlots
 toc()
