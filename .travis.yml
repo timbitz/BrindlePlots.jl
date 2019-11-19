@@ -3,9 +3,9 @@ os:
   - linux
   - osx
 julia:
-  - 0.6
+  - 1.2
 install:
-  julia dependencies.jl
+  - julia -e 'using Pkg; Pkg.instantiate()'
 notifications:
   email: false
 script:

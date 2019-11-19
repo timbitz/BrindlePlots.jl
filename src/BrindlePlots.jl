@@ -2,17 +2,19 @@ __precompile__()
 
 module BrindlePlots
 
-using Compose
-using Gadfly
 using BufferedStreams
-using Libz
+using CSV
+using Compose
 using DataFrames
 using Distributions
-using Measures
+using Gadfly
+using GZip
 using IntervalTrees
+using Libz
+using Measures
 
-importall Measures
-importall Gadfly
+import Measures
+import Gadfly
 
 include("types.jl")
 include("gel.jl")
@@ -27,4 +29,3 @@ export make_plots,
        fixpath
 
 end
-

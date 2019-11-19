@@ -1,17 +1,13 @@
-#=  
+#=
   This should have a type for a gene, which is parsed from file,
     stores every node, and all the paths from .psi.gz files
 =#
 
-const BufIn = BufferedStreams.BufferedInputStream
+BufIn = BufferedStreams.BufferedInputStream
 
 fixpath( str::String ) = abspath( expanduser( str ) )
 
-function isgzipped( filename::String )
-   restr = "\.gz\$"
-   re = Base.match(Regex(restr), filename)
-   return re == nothing ? false : true
-end
+isgzipped( filename::String ) = splitext(filename)[2] == ".gz"
 
 function open_stream( filename )
    fopen = open( filename, "r" )
@@ -32,11 +28,15 @@ function open_streams( files::Vector{String} )
 end
 
 function load_tables( files::Vector{String} )
-   tabs = Vector{DataFrame}(length(files))
+   tabs = Vector{DataFrame}(undef, length(files))
    for i in 1:length(files)
-      tabs[i] = readtable( files[i], separator='\t', header=true )
+      if isgzipped(files[i])
+         tabs[i] = GZip.open(files[i], "r") do gzio
+            CSV.read(gzio, delim='\t', header=1)
+         end
+      else
+         tabs[i] = CSV.read( files[i], delim='\t', header=1)
+      end
    end
    tabs
 end
-
-

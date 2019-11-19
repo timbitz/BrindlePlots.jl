@@ -1,0 +1,22 @@
+name = "BrindlePlots"
+uuid = "56fe4626-0381-11ea-3479-ab5b09f648f2"
+authors = ["Garrett Massman <gmassman20@gmail.com>", "Tim Sterne-Weiler <tim.sterne.weiler@utoronto.ca>"]
+version = "0.1.0"
+
+[compat]
+julia = "^1.0"
+
+[deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+BufferedStreams = "e1450e63-4bb3-523b-b2a4-4ffa8c0fd77d"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+Compose = "a81c6b42-2e10-5240-aca2-a61377ecd94b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GZip = "92fee26a-97fe-5a0c-ad85-20a5f3185b63"
+Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004"
+Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
+IntervalTrees = "524e6230-43b7-53ae-be76-1e9e4d08d11b"
+Libz = "2ec943e9-cfe8-584d-b93d-64dcb6d567b7"
+Measures = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
